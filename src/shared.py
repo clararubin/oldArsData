@@ -9,8 +9,9 @@ QFILE = ''
 
 #QFILE = 'questions.csv'
 #QFILE = '/Users/clararubin/Dropbox/___ARS - my copy/__ARS Mood Dis 16- AZ/questions.csv'
-#arrayFiles16=['Atlanta.csv', 'Chicago.csv','Los Angeles.csv', 'Miami.csv']
-arrayFiles16=['Atlanta.csv', 'Chicago.csv','Los Angeles.csv', 'Miami.csv', 'Houston.csv', 'Philadelphia.csv' , 'NYC.csv', 'DC.csv']
+
+
+arrayFiles16=['Atlanta.csv', 'Chicago.csv','Los Angeles.csv', 'Miami.csv', 'Houston.csv', 'Philadelphia.csv' , 'NYC.csv', 'DC.csv', 'USPC 2016.csv']
 path16 = '/Users/clararubin/Dropbox/___ARS - my copy/___ARS 16/mycorrected/input/'
 arrayFiles16=[ path16 + s for s in arrayFiles16]
 
@@ -34,9 +35,10 @@ global qDict
 smSpace=.1
 bigSpace=.2
 colors=['#ab95d8','#f9cb8f','#cd7caa','#69caf4','#717263', 'red','purple', 'yellow']
-sections16=[[0,2],[3,5],[6,9],[10,12],[13,15],[16,18]]
+sections16=[[0,2],[3,5],[6,9],[10,13],[14,16],[17,19]]
 sections15=[[0,3],[4,7],[8,11],[12,15],[16,20],[21,24]]
 
+#,[14,16],[17,19]
 #pdfNameTemp='psych update 2016 ARS'+dt
 #pdfNameTemp='scottsdale 2016 ARS'+dt
 pdfNameTemp15='psych update 2015 ARS'+dt
@@ -61,7 +63,9 @@ class Question:
         
     def __eq__(self, other):
         return True
-           
+    def __str__(self): 
+        return self.questionText
+    
 class Time:
     pre, post, demo = ['pre','post','demo']
     

@@ -59,6 +59,8 @@ def set_ticks(cityNames,ax,majorTickLabels, numchoices, width, smSpace, bigSpace
     plt.tick_params(which='minor', length=0)
     
 def set_data(ax,numchoices,numcit,responsespre, responsespost, colors, width,smSpace, bigSpace,q,doCumu,percent):
+    print "**** LENGTH OF RESP PRE0"
+    print len(responsespre[0])
     ID=sh.qIDs['pre'][q]
     Ques=sh.qDict['pre'][ID]
     
@@ -98,11 +100,7 @@ def set_data(ax,numchoices,numcit,responsespre, responsespost, colors, width,smS
             if(totalPre[citnum]==0): #city did not answe this q-- check during 'A' series
                 if choicenum==0: 
                     blankcities+=1
-                    #p?rint "blank", q, citnum
                     btracker.append(1)
-                else:
-                    notuse=5
-                    #p?rint "blankblanks"
             else:
                 if(choicenum==0):
                     usedcitynames.append(citnum)
@@ -271,6 +269,8 @@ def graph_pre_post(cityNames,ax,jpdf,fig,preAnswerByQ,postAnswerByQ, q,cumuData,
     else:
         correctIndex=ord(Ques.correctCharacter)-65
         pvals=get_stats(responsespre,responsespost,correctIndex, usedcitynames)
+        print "pvals are: " 
+        print pvals
     
     set_ticks(cityNames,ax,usedcitynames, numchoices, width, smSpace, bigSpace, fontsize,pvals, percent)
     set_legend(q, numchoices,fontsize)

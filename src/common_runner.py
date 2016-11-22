@@ -14,7 +14,7 @@ reload(sh)
 # run make_subplots_each_question over each sec
 def runBySection(prefix,sections,preAnswerByQ,postAnswerByQ,cityNames,cumuData,doCumu,percent,arrayFiles):    
     #sections=[sections[0]]
-    os.chdir('../../output')
+    #os.chdir('../../output')
     k=0
     for sec in sections:
         start = sec[0]
