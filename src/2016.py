@@ -16,6 +16,8 @@ from common_runner import *
 def run16():
     sh.QFILE=sh.QFILE16
     sh.qDict,sh.qIDs = setup.import_questions() #import all basic info about questions
+    import outside_data_2016
+    reload(outside_data_2016)
     import outside_data_2016 as out16
     
     #os.chdir('/Users/clararubin/Dropbox/___ARS - my copy/___ARS 16/mycorrected')
