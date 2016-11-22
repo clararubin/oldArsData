@@ -13,12 +13,8 @@ reload(sh)
 reload(common_runner)
 from common_runner import *
 
-print "dir is "
-print os.getcwd()
-
 def run16():
     sh.QFILE=sh.QFILE16
-    print "HERE minus"
     sh.qDict,sh.qIDs = setup.import_questions() #import all basic info about questions
     import outside_data_2016 as out16
     
@@ -31,10 +27,8 @@ def run16():
     
     cityNames+=["Medscape"]
     cityNames+=["myCME"]
-    print "HERE0"
     numQs = 19
     for i in range(numQs+1):
-        #print i
         if(i==0 or i==1 or i==2):
             preAnswerByQ[i].append(out16.kr_medsc_pre[i])
             postAnswerByQ[i].append(out16.kr_medsc_post[i])
@@ -54,7 +48,6 @@ def run16():
             
     #printCSV(preAnswerByQ, postAnswerByQ, cityNames, '2016data.csv')
     #printCSVpercent(preAnswerByQ, postAnswerByQ, cityNames, '2016dataPercent.csv')
-    print "HERE"
     pvals = runBySection("perc ",sh.sections16,preAnswerByQ,postAnswerByQ,cityNames,cumuData,doCumu,percent,sh.arrayFiles16)
     return preAnswerByQ,postAnswerByQ,pvals #,demoAnswerByQ
 
