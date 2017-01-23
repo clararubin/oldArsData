@@ -11,7 +11,7 @@ QFILE = ''
 #QFILE = '/Users/clararubin/Dropbox/___ARS - my copy/__ARS Mood Dis 16- AZ/questions.csv'
 
 
-arrayFiles16=['Atlanta.csv', 'Chicago.csv','Los Angeles.csv', 'Miami.csv', 'Houston.csv', 'Philadelphia.csv' , 'NYC.csv', 'San Francisco.csv','DC.csv', 'USPC 2016.csv']
+arrayFiles16=['Atlanta.csv', 'Chicago.csv','Los Angeles.csv', 'Miami.csv', 'Houston.csv', 'Philadelphia.csv' , 'NYC.csv', 'San Francisco.csv','DC.csv', 'Boston.csv','USPC 2016.csv']
 path16 = '/Users/clararubin/Dropbox/___ARS - my copy/___ARS 16/mycorrected/input/'
 arrayFiles16=[ path16 + s for s in arrayFiles16]
 
