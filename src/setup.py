@@ -40,7 +40,6 @@ def setupResp(arrayFiles):
     # regroup from byCity to byQ
     preAnswerByQ=[[tally_responses(cit,'pre',q) for cit in preByCity] for q in sh.qIDs['pre']]
     postAnswerByQ=[[tally_responses(cit,'post',q) for cit in postByCity] for q in sh.qIDs['post']]
-    
     demoAnswerByQ=[[tally_responses(cit,'demo',q) for cit in demoByCity] for q in sh.qIDs['demo']]
 
 

@@ -97,7 +97,7 @@ def set_data(ax,numchoices,numcit,responsespre, responsespost, colors, width,smS
         preCumulative=0
         postCumulative=0
         for citnum in range(numcit):
-            if(totalPre[citnum]==0): #city did not answe this q-- check during 'A' series
+            if(totalPre[citnum]==0): #city did not answer this q-- check during 'A' series
                 if choicenum==0: 
                     blankcities+=1
                     btracker.append(1)
@@ -121,8 +121,8 @@ def set_data(ax,numchoices,numcit,responsespre, responsespost, colors, width,smS
                     z+=1
                 temp=((citnum-blanksofar)*(2*width*numchoices +smSpace+bigSpace)+ choicenum*width )    
                 Xvals.append(temp)
-                Xvals.append(temp + width*numchoices +smSpace )    
-        if(len(Ques.correctCharacter)>1 or ord(Ques.correctCharacter)-65!=choicenum): #no correct answer
+                Xvals.append(temp + width*numchoices + smSpace)    
+        if(len(Ques.correctCharacter)>1 or ord(Ques.correctCharacter)-65 != choicenum): #no correct answer
             thiscolor=colors[color]
             color+=1
             edgecolor='none'
@@ -142,7 +142,11 @@ def set_data(ax,numchoices,numcit,responsespre, responsespost, colors, width,smS
             Yvals.append(100.0*postCumulative/sum(totalPost))
         else:
             Xvals=Xvals[0:-2]
-        series=ax.bar(Xvals, Yvals, color=thiscolor,width=.8*width, label=Ques.arrayMultipleChoices[choicenum],edgecolor = edgecolor, linewidth=.7)
+            
+        #ax.bar changes state of pdf
+        series = ax.bar(Xvals, Yvals, color=thiscolor, width=.8*width, label=Ques.arrayMultipleChoices[choicenum], edgecolor = edgecolor, linewidth=.7)
+       
+        
         #cumulativeData=[preCumulative,sum(totalPre),postCumulative,sum(totalPost)]
         #p?rint "CCC",cumulativeData
         #p?rint q, choicenum, Yvals
@@ -286,6 +290,9 @@ def graph_pre_post(cityNames,ax,jpdf,fig,preAnswerByQ,postAnswerByQ, q,cumuData,
 def make_subplots_each_question(start,end,preAnswerByQ,postAnswerByQ,cityNames,arrayFiles,pdfName,cumuData,doCumu,percent):
     import os
     pvals=[]
+    print("~~~~~~~~~~~~~~~~~")
+    print(pdfName)
+    print("~~~~~~~~~~~~~~~~~")
     pdf = PdfPages(pdfName)
     stored_city_name=[]
     i=start

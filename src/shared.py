@@ -4,7 +4,7 @@ NO_RESPONSE = '-'
 MULTIPLE_CHOICE_LETTERS = ['A','B','C','D','E','F','G','H']
 DEGREE_LETTER_CHOICES = MULTIPLE_CHOICE_LETTERS
 QFILE15 = '/Users/clararubin/Dropbox/___ARS - my copy/__ARS 15/corrected/questions.csv'
-QFILE16 = '/Users/clararubin/Dropbox/___ARS - my copy/___ARS 16/mycorrected/input/questions2.csv'
+QFILE16 = 'C:\Users\Marty\Documents\ARS\input\questions2.csv'
 QFILE = ''
 
 #QFILE = 'questions.csv'
@@ -12,7 +12,7 @@ QFILE = ''
 
 
 arrayFiles16=['Atlanta.csv', 'Chicago.csv','Los Angeles.csv', 'Miami.csv', 'Houston.csv', 'Philadelphia.csv' , 'NYC.csv', 'San Francisco.csv','DC.csv', 'Boston.csv','USPC 2016.csv']
-path16 = '/Users/clararubin/Dropbox/___ARS - my copy/___ARS 16/mycorrected/input/'
+path16 = 'C:\Users\Marty\Documents\ARS\input\\'
 arrayFiles16=[ path16 + s for s in arrayFiles16]
 
 
@@ -28,7 +28,7 @@ import numpy as np
 from collections import OrderedDict
 import datetime
 import time
-dt= str(datetime.date.today())+','+str(time.strftime("%H:%M"))
+dt= str(datetime.date.today())+'--'+str(time.strftime("%H-%M"))
 global qIDs 
 qIDs="none"
 global qDict
@@ -41,11 +41,11 @@ sections15=[[0,3],[4,7],[8,11],[12,15],[16,20],[21,24]]
 #,[14,16],[17,19]
 #pdfNameTemp='psych update 2016 ARS'+dt
 #pdfNameTemp='scottsdale 2016 ARS'+dt
-pdfNameTemp15='psych update 2015 ARS'+dt
-pdfNameTemp16='psych update 2016 ARS'+dt
+pdfNameTemp15='psych update 2015 ARS'+'--'+dt
+pdfNameTemp16='psych update 2016 ARS'+'--'+dt
 
-pdfNames15=[pdfNameTemp15+"part"+str(i)+'.pdf' for i in range(1,13)]
-pdfNames16=[pdfNameTemp16+"part"+str(i)+'.pdf' for i in range(1,13)]
+pdfNames15=[pdfNameTemp15+"--part"+str(i)+'.pdf' for i in range(1,13)]
+pdfNames16=[pdfNameTemp16+"--part"+str(i)+'.pdf' for i in range(1,13)]
 
 pdfNames = []
 
@@ -68,7 +68,8 @@ class Question:
     
 class Time:
     pre, post, demo = ['pre','post','demo']
-    
+
+#ES = Effect Size
 def getES(preC, preW, postC, postW):
     Npre = preC+preW
     Npost= postC+postW

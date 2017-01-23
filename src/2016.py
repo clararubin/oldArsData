@@ -23,6 +23,7 @@ def run16():
     #os.chdir('/Users/clararubin/Dropbox/___ARS - my copy/___ARS 16/mycorrected')
     sh.pdfNames = sh.pdfNames16
     sh.QFILE = sh.QFILE16
+    ##following 2 lines prob dont work
     doCumu=True
     percent=True
     preAnswerByQ,postAnswerByQ,cityNames,cumuData,demoAnswerByQ = setup.setupResp(sh.arrayFiles16)
