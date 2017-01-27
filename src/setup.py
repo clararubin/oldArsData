@@ -7,61 +7,81 @@ import numpy as np
 #********* SETUP **************
 #******************************
 
+class Question:
+    def __init__(self, questionText, topic, time, correctCharacter, arrayChoices,numCol,id):
+        self.questionText = questionText
+        self.correctCharacter = correctCharacter 
+        self.topic = topic
+        self.time = time 
+        self.arrayMultipleChoices = arrayChoices
+        self.numberOfChoices = len(self.arrayMultipleChoices)
+        self.id=id
+        self.numCol=min(100000,numCol)
+        
+    def __eq__(self, other):
+        return True
+    def __str__(self): 
+        return "Question %d: %s" % self.id, self.questionText
 
+class Questions_Data:
+    def __init__(self, questions_filepath):
+        self.qDict={'demo':OrderedDict(),'pre':OrderedDict(), 'post':OrderedDict()}
+        self.qIDs={}
+        print(questions_filepath)
+        importedDataFrame = pd.DataFrame.from_csv(questions_filepath)
+        cols = importedDataFrame.columns
+        for i in cols:
+            multipleChoiceAnswersArray = [
+                        importedDataFrame.ix[k,i]
+                        for k in sh.MULTIPLE_CHOICE_LETTERS
+                        if importedDataFrame.ix[k,i] != sh.NO_RESPONSE
+                        ]
+            question = Question( importedDataFrame.ix['question text',i], 
+                                    importedDataFrame.ix['topic',i],
+                                    importedDataFrame.ix['time',i], 
+                                    importedDataFrame.ix['correct character',i],
+                                    multipleChoiceAnswersArray,
+                                    int(importedDataFrame.ix['display cols',i]),
+                                    i)
+            self.qDict[question.time][question.id] = question
+        for j in self.qDict.keys():
+            self.qIDs[j] = self.qDict[j].keys()
+    def get(self, time, i):
+        id = self.qIDs[time][i]
+        ques = self.qDict[time][id]
+        return ques
+            
 
-def import_questions(questions_filepath):
-    sh.qDict={'demo':OrderedDict(),'pre':OrderedDict(), 'post':OrderedDict()}
-    sh.qIDs={}
-    print(questions_filepath)
-    importedDataFrame = pd.DataFrame.from_csv(questions_filepath)
-    cols = importedDataFrame.columns
-    for i in cols:
-        multipleChoiceAnswersArray = [
-                    importedDataFrame.ix[k,i]
-                    for k in sh.MULTIPLE_CHOICE_LETTERS
-                    if importedDataFrame.ix[k,i] != sh.NO_RESPONSE
-                    ]
-        question = sh.Question( importedDataFrame.ix['question text',i], 
-                                importedDataFrame.ix['topic',i],
-                                importedDataFrame.ix['time',i], 
-                                importedDataFrame.ix['correct character',i],
-                                multipleChoiceAnswersArray,
-                                int(importedDataFrame.ix['display cols',i]),
-                                i)
-        sh.qDict[question.time][question.id] = question
-    for j in sh.qDict.keys():
-          sh.qIDs[j]=sh.qDict[j].keys() 
-    return sh.qDict, sh.qIDs
+class Responses_Data:
+    def __init__(self, array_files, questions_data):
+        #following line checks for either / or \ in filepath because of different OS's
+        #TODO: make less hacky
+        tempCityNames=[((i.split('/' if '/' in i else '\\'))[-1] ) for i in array_files]
+        self.cityNames=[((i.split('.'))[0] ) for i in tempCityNames]
+        
+        # load preByCity using qID['pre'] column names
+        preByCity = [pd.DataFrame.from_csv(i, header=8).loc[:,questions_data.qIDs['pre']] for i in array_files]
+        postByCity= [pd.DataFrame.from_csv(i, header=8).loc[:,questions_data.qIDs['post']] for i in array_files]
+        demoByCity= [pd.DataFrame.from_csv(i, header=8).loc[:,questions_data.qIDs['demo']] for i in array_files]
+    
+        # regroup from byCity to byQ
+        self.preAnswerByQ=[[tally_responses(cit,'pre', q_id, questions_data) for cit in preByCity] for q_id in questions_data.qIDs['pre']]
+        self.postAnswerByQ=[[tally_responses(cit,'post', q_id, questions_data) for cit in postByCity] for q_id in questions_data.qIDs['post']]
+        self.demoAnswerByQ=[[tally_responses(cit,'demo', q_id, questions_data) for cit in demoByCity] for q_id in questions_data.qIDs['demo']]
+    
+        cumuPreTally=[[sum(x) for x in zip(*[c for c in q])] for q in self.preAnswerByQ ]
+        cumuPostTally=[[sum(x) for x in zip(*[c for c in q])] for q in self.postAnswerByQ ]
+    
+        self.cumuData = [cumuPreTally, cumuPostTally]
+    
 
-def responses_init(arrayFiles):
-       
-    tempCityNames=[((i.split('/'))[-1] ) for i in arrayFiles]
-    cityNames=[((i.split('.'))[0] ) for i in tempCityNames]
-       
-    # load preByCity using qID['pre'] column names
-    preByCity = [pd.DataFrame.from_csv(i, header=8).loc[:,sh.qIDs['pre']] for i in arrayFiles]
-    postByCity= [pd.DataFrame.from_csv(i, header=8).loc[:,sh.qIDs['post']] for i in arrayFiles]
-    demoByCity= [pd.DataFrame.from_csv(i, header=8).loc[:,sh.qIDs['demo']] for i in arrayFiles]
-
-    # regroup from byCity to byQ
-    preAnswerByQ=[[tally_responses(cit,'pre', q_id) for cit in preByCity] for q_id in sh.qIDs['pre']]
-    postAnswerByQ=[[tally_responses(cit,'post', q_id) for cit in postByCity] for q_id in sh.qIDs['post']]
-    demoAnswerByQ=[[tally_responses(cit,'demo', q_id) for cit in demoByCity] for q_id in sh.qIDs['demo']]
-
-    cumuPreTally=[[sum(x) for x in zip(*[c for c in q])] for q in preAnswerByQ ]
-    cumuPostTally=[[sum(x) for x in zip(*[c for c in q])] for q in postAnswerByQ ]
-
-    cumuData = [cumuPreTally, cumuPostTally]
-    return preAnswerByQ,postAnswerByQ, cityNames,cumuData,demoAnswerByQ
-
-
-def tally_responses(inputFrame, time, q_id):   
+def tally_responses(inputFrame, time, q_id, questions_data):   
     ''' Counts number of A's, B's, etc for a question
         inputFrame: whole file
         time: demo/pre/post, loads the proper array
         q_id: which question in the category
     '''
-    numberOfChoices = (sh.qDict[time][q_id]).numberOfChoices
+    numberOfChoices = (questions_data.qDict[time][q_id]).numberOfChoices
     if len(inputFrame) == 0:
         return np.zeros(numberOfChoices)
     arrayOfResponses = []
