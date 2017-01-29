@@ -3,49 +3,53 @@ from collections import OrderedDict
 import pandas as pd
 import numpy as np
 
-#******************************
-#********* SETUP **************
-#******************************
 
 class Question:
     def __init__(self, questionText, topic, time, correctCharacter, arrayChoices,numCol,id):
-        self.questionText = questionText
-        self.correctCharacter = correctCharacter 
-        self.topic = topic
-        self.time = time 
+        self.questionText         = questionText
+        self.correctCharacter     = correctCharacter 
+        self.topic                = topic
+        self.time                 = time 
         self.arrayMultipleChoices = arrayChoices
-        self.numberOfChoices = len(self.arrayMultipleChoices)
-        self.id=id
-        self.numCol=min(100000,numCol)
+        self.numberOfChoices      = len(self.arrayMultipleChoices)
+        self.id                   = id
+        self.numCol               = min(100000,numCol)
         
-    def __eq__(self, other):
-        return True
     def __str__(self): 
         return "Question %d: %s" % self.id, self.questionText
 
+
 class Questions_Data:
     def __init__(self, questions_filepath):
-        self.qDict={'demo':OrderedDict(),'pre':OrderedDict(), 'post':OrderedDict()}
-        self.qIDs={}
-        print(questions_filepath)
-        importedDataFrame = pd.DataFrame.from_csv(questions_filepath)
-        cols = importedDataFrame.columns
+        self.qDict = {'demo':OrderedDict(),'pre':OrderedDict(), 'post':OrderedDict()}
+        self.qIDs  = {}
+        
+        df = pd.DataFrame.from_csv(questions_filepath)
+        cols = df.columns
+        
         for i in cols:
+           
             multipleChoiceAnswersArray = [
-                        importedDataFrame.ix[k,i]
+                        df.ix[k,i]
                         for k in sh.MULTIPLE_CHOICE_LETTERS
-                        if importedDataFrame.ix[k,i] != sh.NO_RESPONSE
+                        if df.ix[k,i] != sh.NO_RESPONSE
                         ]
-            question = Question( importedDataFrame.ix['question text',i], 
-                                    importedDataFrame.ix['topic',i],
-                                    importedDataFrame.ix['time',i], 
-                                    importedDataFrame.ix['correct character',i],
-                                    multipleChoiceAnswersArray,
-                                    int(importedDataFrame.ix['display cols',i]),
-                                    i)
+            
+            question = Question(
+                                df.ix['question text',i], 
+                                df.ix['topic',i],
+                                df.ix['time',i], 
+                                df.ix['correct character',i],
+                                multipleChoiceAnswersArray,
+                                int(df.ix['display cols',i]),
+                                i
+                                )
+            
             self.qDict[question.time][question.id] = question
+        
         for j in self.qDict.keys():
             self.qIDs[j] = self.qDict[j].keys()
+    
     def get(self, time, i):
         id = self.qIDs[time][i]
         ques = self.qDict[time][id]
@@ -76,14 +80,19 @@ class Responses_Data:
     
 
 def tally_responses(inputFrame, time, q_id, questions_data):   
-    ''' Counts number of A's, B's, etc for a question
-        inputFrame: whole file
-        time: demo/pre/post, loads the proper array
-        q_id: which question in the category
+    ''' 
+    Counts number of A's, B's, etc for a question.
+    
+    :param inputFrame: whole file's data
+    :param time:       demo/pre/post, loads the proper array
+    :param q_id:       which question in the category
+    :returns:          array of counts for each mult choice answer
     '''
     numberOfChoices = (questions_data.qDict[time][q_id]).numberOfChoices
+    
     if len(inputFrame) == 0:
         return np.zeros(numberOfChoices)
+        
     arrayOfResponses = []
     for letter in sh.MULTIPLE_CHOICE_LETTERS[:numberOfChoices]:
         expr = q_id + ' =="' + letter + '"'

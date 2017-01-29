@@ -2,6 +2,8 @@ import matplotlib.pyplot as plt
 import sys
 import pylab
 import os
+import shared
+reload(shared)
 from matplotlib.backends.backend_pdf import PdfPages
 
 
@@ -87,12 +89,12 @@ def set_data(ax, numchoices,numcit,responsespre, responsespost, colors, width, s
     print "total post is:"
     print totalPost
     for choicenum in range(numchoices): #A
-        Xvals=[]
-        Yvals=[]
-        preCumulative=0
-        postCumulative=0
+        Xvals = []
+        Yvals = []
+        preCumulative  = 0
+        postCumulative = 0
         for citnum in range(numcit):
-            if(totalPre[citnum]==0): #city did not answer this q-- check during 'A' series
+            if(totalPre[citnum] == 0): #city did not answer this q-- check during 'A' series
                 if choicenum == 0: 
                     blankcities+=1
                     btracker.append(1)
@@ -121,7 +123,7 @@ def set_data(ax, numchoices,numcit,responsespre, responsespost, colors, width, s
             thiscolor=colors[color]
             color+=1
             edgecolor='none'
-        elif ord(question.correctCharacter)-65==choicenum:
+        elif ord(question.correctCharacter)-65 == choicenum:
             thiscolor='lime'
             edgecolor='none'
         else:
@@ -143,20 +145,16 @@ def set_data(ax, numchoices,numcit,responsespre, responsespost, colors, width, s
        
     
     nLoc = Xvals[-3]+2*width
-    #nLoc = Xvals[-2]-4*width
     nLocY = .9
     if(numcit<2):
         nLoc=.8
     
-    summed_totalPre = sum(totalPre)
+    summed_totalPre  = sum(totalPre)
     summed_totalPost = sum(totalPost)
     
-    #ax.annotate('pre:  N='+str(sum(totalPre))+'\npost: N='+str(sum(totalPost)), xy=(nLoc, nLocY), xycoords=ax.get_xaxis_transform(), fontsize=6, va='top')
     ax.annotate('pre:  N='+str(summed_totalPre)+'\npost: N='+str(summed_totalPost), xy=(nLoc, nLocY), xycoords=ax.get_xaxis_transform(), fontsize=6, va='top')
 
-    #ax.text(Xvals[len(Xvals)-2], height_nVal, 'N=\n'+str(sum(totalPre)), fontsize=6,ha='center')
-    #ax.text(Xvals[len(Xvals)-1], height_nVal, 'N=\n'+str(sum(totalPost)),fontsize=6,ha='center')
-    Xmax=Xvals[len(Xvals)-1]+width
+    Xmax = Xvals[len(Xvals)-1]+width
     return usedcitynames, Xmax
 
 def set_legend(q_id, numchoices, fontsize, questions_data):
@@ -224,16 +222,14 @@ def graph_pre_post(ax,fig, q_id, is_cumulative, is_percent, questions_data, resp
     responsespost = responses_data.postAnswerByQ[q_id]
   
     #setup
-    smSpace = .1
-    bigSpace = .2
-    question = questions_data.get('pre', q_id)
-
+    smSpace    = .1
+    bigSpace   = .2
+    question   = questions_data.get('pre', q_id)
     numchoices = question.numberOfChoices
-
-    width = (1 - bigSpace) / (numchoices*2)
-    numcit=len(responsespre)
-    fontsize=8
-    colors=['#ab95d8','#f9cb8f','#cd7caa','#69caf4','#717263','#ffff66']
+    width      = (1 - bigSpace) / (numchoices*2)
+    numcit     = len(responsespre)
+    fontsize   = 8
+    colors     = ['#ab95d8','#f9cb8f','#cd7caa','#69caf4','#717263','#ffff66']
 
     #data & graphing functions
     usedcitynames, Xmax = set_data(ax,numchoices,numcit, responsespre, responsespost, colors, width,smSpace, bigSpace, q_id, is_cumulative, is_percent, questions_data )
@@ -256,41 +252,50 @@ def graph_pre_post(ax,fig, q_id, is_cumulative, is_percent, questions_data, resp
     plt.tight_layout()
     return usedcitynames, pvals
 
-def make_subplots_each_question(section_iterator, arrayFiles, pdfName, is_cumulative, is_percent, questions_data, responses_data):
-    pvals=[]
+
+def addPlotToPage(index, fig, q, is_cumulative, is_percent, questions_data, responses_data, stored_city_name, pvals):
+    '''
+    :param index:             index of plot on page (1 or 2 bc there are only 2 plots per page)
+    :param fig:               object (in this case equal to 1 page) which contains plots
+    :param q:
+    :param is_cumulative:
+    :param is_percent:
+    :param questions_data:
+    :param responses_data:
+    :param stored_city_name:
+    :param pvals:
+    '''
+    ax = fig.add_subplot(2, 1, index)
+    cit, pval = graph_pre_post(ax, fig, q, is_cumulative, is_percent, questions_data, responses_data)
+    stored_city_name.append(cit)
+    pvals.append(pval)
+    
+    
+def make_subplots_each_question(section_iter, pdfName, is_cumulative, is_percent, questions_data, responses_data):
     print("~~~~~~~~~~~~~~~~~")
     print(pdfName)
     print("~~~~~~~~~~~~~~~~~")
     
-    output_path = '..\..\output\\'
-    if(os.name == 'posix'):
-        output_path = "../../output/"
-
-    pdf = PdfPages(output_path + pdfName)
+    pdf = PdfPages(shared.getOutputPath() + pdfName)
     stored_city_name=[]
-    
+    pvals=[]
+
     #iterates through the range of section numbers 2 at a time, or 1 if only 1 remaining
-    for i in section_iterator:
-        print "\n\n\nprocess Q", i, 
+    for q in section_iter:
+        print "\n\n\nprocess Q", q, 
         fig = plt.figure(figsize=(11,8.5), dpi=100)
-        ax1 = fig.add_subplot(2,1,1)
-        cit, pval = graph_pre_post(ax1,fig,i, is_cumulative, is_percent, questions_data, responses_data)
-        stored_city_name.append(cit)
-        pvals.append(pval)
-        text= '* = change not significant (p$\geq$0.05)'
-        text2='\ngreen = correct answer'
-        pylab.figtext(0.01, .98, text, fontsize=8)
-        pylab.figtext(0.01, .97, text2, fontsize=8, color='lime')
+        addPlotToPage(1,fig,q, is_cumulative, is_percent, questions_data, responses_data, stored_city_name, pvals)
+        pylab.figtext(0.01, .98, shared.GRAPH_TEXT_1, fontsize=8)
+        pylab.figtext(0.01, .97, shared.GRAPH_TEXT_2, fontsize=8, color='lime')
+        
         try:
-            i = next(section_iterator)
-            ax2 = fig.add_subplot(2,1,2)
-            print "\n\n\nprocess Q", i
-            cit, pval = graph_pre_post(ax2,fig,i, is_cumulative, is_percent, questions_data, responses_data)
-            stored_city_name.append(cit)
-            pvals.append(pval)
+            q = next(section_iter)
+            addPlotToPage(2,fig,q, is_cumulative, is_percent, questions_data, responses_data, stored_city_name, pvals)
         except StopIteration:
             pass
+        
         pdf.savefig(fig, orientation='portrait')
+        
     plt.close()
     pdf.close()
     return stored_city_name, pvals

@@ -5,7 +5,7 @@ def get_date_string():
     """
     Gets date.
 
-    :return: string representing date (e.g. '2017-01-23__23-12')
+    :returns: string representing date (e.g. '2017-01-23__23-12')
     """
     return str(datetime.date.today()) + '__' +str(time.strftime("%H-%M-%S"))
 
