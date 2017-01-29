@@ -1,8 +1,8 @@
 import matplotlib.pyplot as plt
 import sys
 import pylab
+import os
 from matplotlib.backends.backend_pdf import PdfPages
-
 
 
 def set_ticks(cityNames, ax, majorTickLabels, numchoices, width, smSpace, bigSpace, fontsize, pvals, is_percent):
@@ -57,12 +57,8 @@ def set_ticks(cityNames, ax, majorTickLabels, numchoices, width, smSpace, bigSpa
     ax.tick_params(which = 'major', direction = 'out')
     plt.tick_params(which='minor', length=0)
     
-def set_data(ax, numchoices,numcit,responsespre, responsespost, colors, width, smSpace, bigSpace, q_id, is_cumulative, is_percent,questions_data):
-    print "**** LENGTH OF RESP PRE0"
-    print len(responsespre[0])
-    
+def set_data(ax, numchoices,numcit,responsespre, responsespost, colors, width, smSpace, bigSpace, q_id, is_cumulative, is_percent,questions_data):    
     question = questions_data.get('pre',q_id)
-    
     blankcities=0
     usedcitynames=[]
     color=0
@@ -175,8 +171,6 @@ def set_legend(q_id, numchoices, fontsize, questions_data):
 
     
 def set_title(ax, question):
-    #set title
-
     wholeString = (question.questionText).split()
     h=0
     newString=''
@@ -221,12 +215,11 @@ def get_stats(responsespre,responsespost,correctIndex,usedcitynames):
         pval=get_pvals(correctPre,incorrectPre,correctPost,incorrectPost)
         pvals.append(pval)
 
-    #p?rint "III",TOTcorrectPre, TOTincorrectPre,TOTcorrectPost,TOTincorrectPost
     pval=get_pvals(TOTcorrectPre,TOTincorrectPre,TOTcorrectPost,TOTincorrectPost)
     pvals.append(pval)
     return pvals
     
-def graph_pre_post(ax,jpdf,fig, q_id, is_cumulative, is_percent, questions_data, responses_data):
+def graph_pre_post(ax,fig, q_id, is_cumulative, is_percent, questions_data, responses_data):
     responsespre = responses_data.preAnswerByQ[q_id] #single q over different cities
     responsespost = responses_data.postAnswerByQ[q_id]
   
@@ -268,7 +261,12 @@ def make_subplots_each_question(section_iterator, arrayFiles, pdfName, is_cumula
     print("~~~~~~~~~~~~~~~~~")
     print(pdfName)
     print("~~~~~~~~~~~~~~~~~")
-    pdf = PdfPages(pdfName)
+    
+    output_path = '..\..\output\\'
+    if(os.name == 'posix'):
+        output_path = "../../output/"
+
+    pdf = PdfPages(output_path + pdfName)
     stored_city_name=[]
     
     #iterates through the range of section numbers 2 at a time, or 1 if only 1 remaining
@@ -276,7 +274,7 @@ def make_subplots_each_question(section_iterator, arrayFiles, pdfName, is_cumula
         print "\n\n\nprocess Q", i, 
         fig = plt.figure(figsize=(11,8.5), dpi=100)
         ax1 = fig.add_subplot(2,1,1)
-        cit, pval = graph_pre_post(ax1,pdf,fig,i, is_cumulative, is_percent, questions_data, responses_data)
+        cit, pval = graph_pre_post(ax1,fig,i, is_cumulative, is_percent, questions_data, responses_data)
         stored_city_name.append(cit)
         pvals.append(pval)
         text= '* = change not significant (p$\geq$0.05)'
@@ -287,7 +285,7 @@ def make_subplots_each_question(section_iterator, arrayFiles, pdfName, is_cumula
             i = next(section_iterator)
             ax2 = fig.add_subplot(2,1,2)
             print "\n\n\nprocess Q", i
-            cit, pval = graph_pre_post(ax2,pdf,fig,i, is_cumulative, is_percent, questions_data, responses_data)
+            cit, pval = graph_pre_post(ax2,fig,i, is_cumulative, is_percent, questions_data, responses_data)
             stored_city_name.append(cit)
             pvals.append(pval)
         except StopIteration:

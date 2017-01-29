@@ -1,6 +1,4 @@
 # -*- coding: utf-8 -*-
-
-# cd /Users/clararubin/Google Drive/**synced files/Work/corrected
 import os
 import setup
 import graphing
