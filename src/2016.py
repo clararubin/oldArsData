@@ -32,6 +32,7 @@ def run16():
     questions_data = setup.Questions_Data(questions_filepath)
     
     responses_data = setup.Responses_Data(file_array, questions_data)
+    
     out16.add_outside_responses(responses_data)
     
     is_cumulative = True

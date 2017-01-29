@@ -12,8 +12,6 @@ reload(pdf_name_generator)
 
 # run make_subplots_each_question over each sec
 def runBySection(PDF_FILENAME_PREFIX, section_list, is_cumulative, is_percent, arrayFiles, questions_data, responses_data):    
-    #sections=[sections[0]]
-    #os.chdir('../../output')
     for i, sec in enumerate(section_list):
         section_iterator = iter(range(sec[0],sec[1]+1))
         
