@@ -1,35 +1,34 @@
+# -*- coding: utf-8 -*-
 import matplotlib.pyplot as plt
 import sys
 import pylab
 import os
-import shared
-reload(shared)
+import shared as sh
+reload(sh)
 from matplotlib.backends.backend_pdf import PdfPages
 
 
-def set_ticks(cityNames, ax, majorTickLabels, numchoices, width, smSpace, bigSpace, fontsize, pvals, is_percent):
+def set_ticks(cityNames, ax, majorTickLabels, numchoices, width, fontsize, pvals, is_percent):
     minorticks=[]
     pretick=width*(numchoices)/2
-    posttick=(pretick+smSpace+ width*(numchoices))
+    posttick=(pretick + sh.SMALL_SPACE + width*(numchoices))
     majorticks=[(pretick+posttick)/2]
     minorticks.append(pretick)
     minorticks.append(posttick)
     while len(majorticks)<(len(majorTickLabels)+1):
-        pretick=(posttick+bigSpace+ width*(numchoices))
-        posttick=(pretick+smSpace+ width*(numchoices))
+        pretick=(posttick+ sh.BIG_SPACE+ width*(numchoices))
+        posttick=(pretick+ sh.SMALL_SPACE + width*(numchoices))
         majorticks.append((pretick+posttick)/2)
         minorticks.append(pretick)
         minorticks.append(posttick)
     ax.set_xticks(minorticks, minor = True)
     ax.set_xticklabels(['pre','post']*(len(majorTickLabels)+1), minor=True, fontsize=fontsize-1)
     ax.set_xticks(majorticks)
-    #ax.set_yticks(range(0,101,20))
-    #ax.set_yticklabels(range(0,101,20),fontsize=fontsize)
     labelsWithNewline=[]
     for i in range(len(majorTickLabels)):
         if pvals[0]==-1:
             labelsWithNewline.append('\n'+((cityNames[majorTickLabels[i]])+'\n**'))
-        elif pvals[i]<0.05:
+        elif pvals[i]<.05:
             labelsWithNewline.append('\n'+((cityNames[majorTickLabels[i]])))
         elif pvals[i]>.05:
             labelsWithNewline.append('\n'+((cityNames[majorTickLabels[i]])+'\n*'))
@@ -51,7 +50,6 @@ def set_ticks(cityNames, ax, majorTickLabels, numchoices, width, smSpace, bigSpa
     if(len(cityNames)<2):
         font=9
     ax.set_xticklabels(labelsWithNewline, fontsize=font)
-#     ax.yaxis.set_major_formatter(plt.FormatStrFormatter('%.f%%'))
     ax.xaxis.set_ticks_position('bottom')
     ax.yaxis.set_ticks_position('left')
     ax.spines['top'].set_visible(False)
@@ -59,8 +57,8 @@ def set_ticks(cityNames, ax, majorTickLabels, numchoices, width, smSpace, bigSpa
     ax.tick_params(which = 'major', direction = 'out')
     plt.tick_params(which='minor', length=0)
     
-def set_data(ax, numchoices,numcit,responsespre, responsespost, colors, width, smSpace, bigSpace, q_id, is_cumulative, is_percent,questions_data):    
-    question = questions_data.get('pre',q_id)
+def set_data(ax, numchoices, numcit, responsespre, responsespost, width, q_index, is_cumulative, is_percent, questions_data):    
+    question = questions_data.get('pre', q_index)
     blankcities=0
     usedcitynames=[]
     color=0
@@ -116,11 +114,11 @@ def set_data(ax, numchoices,numcit,responsespre, responsespost, colors, width, s
                 while z<citnum:
                     blanksofar+=btracker[z]
                     z+=1
-                temp=((citnum-blanksofar)*(2*width*numchoices +smSpace+bigSpace)+ choicenum*width )    
+                temp=((citnum-blanksofar)*(2*width*numchoices + sh.SMALL_SPACE + sh.BIG_SPACE) + choicenum*width )    
                 Xvals.append(temp)
-                Xvals.append(temp + width*numchoices + smSpace)    
+                Xvals.append(temp + width*numchoices + sh.SMALL_SPACE)    
         if (len(question.correctCharacter) > 1) or (ord(question.correctCharacter) - ord('A') != choicenum): #no correct answer
-            thiscolor=colors[color]
+            thiscolor= sh.COLORS[color]
             color+=1
             edgecolor='none'
         elif ord(question.correctCharacter)-65 == choicenum:
@@ -130,9 +128,9 @@ def set_data(ax, numchoices,numcit,responsespre, responsespost, colors, width, s
             sys.stderr.write("color err")
             SystemExit()
         #add cumulative field
-        temp=((citnum+1-blankcities)*(2*width*numchoices +smSpace+bigSpace)+ choicenum*width )    
+        temp=((citnum+1-blankcities)*(2*width*numchoices + sh.SMALL_SPACE + sh.BIG_SPACE)+ choicenum*width )    
         Xvals.append(temp)
-        Xvals.append(temp + width*numchoices +smSpace ) 
+        Xvals.append(temp + width*numchoices + sh.SMALL_SPACE ) 
         # **** DETERMINE CUMULATIVE ***
         if is_cumulative:
             Yvals.append(100.0*preCumulative/sum(totalPre))
@@ -157,17 +155,15 @@ def set_data(ax, numchoices,numcit,responsespre, responsespost, colors, width, s
     Xmax = Xvals[len(Xvals)-1]+width
     return usedcitynames, Xmax
 
-def set_legend(q_id, numchoices, fontsize, questions_data):
-    legH=1.05
-    legW=0.5
-    legfontsize=fontsize-1
-    question = questions_data.get('pre', q_id)
-    col = question.numCol
-    legend=plt.legend(loc='upper center',bbox_to_anchor=(legW, legH),ncol=col, fontsize=legfontsize) 
+def set_legend(number_of_columns, numchoices, fontsize):
+    legH = 1.05
+    legW = 0.5
+    legfontsize = fontsize-1
+    legend = plt.legend(loc='upper center', bbox_to_anchor=(legW, legH), ncol=number_of_columns, fontsize=legfontsize) 
     legend.get_frame().set_facecolor('none')
     legend.get_frame().set_linewidth(.5)
 
-    
+#TODO: refactor this
 def set_title(ax, question):
     wholeString = (question.questionText).split()
     h=0
@@ -187,7 +183,7 @@ def get_pvals(correctPre, incorrectPre, correctPost, incorrectPost):
     chi= 1.*(correctPre*incorrectPost - correctPost*incorrectPre)*(correctPre*incorrectPost - correctPost*incorrectPre)*(correctPre+incorrectPost+correctPost+incorrectPre)
     denom=1.0*((correctPre+correctPost)*(incorrectPost+incorrectPre)*(incorrectPost+correctPost)*(correctPre+incorrectPre))
     if denom==0:
-        sys.stderr.write( 'ZEROZERO')
+        sys.stderr.write('ZEROZERO')
         #p?rint correctPre,incorrectPost,correctPost,incorrectPre
         chi=-1
     chi = chi/denom
@@ -217,32 +213,33 @@ def get_stats(responsespre, responsespost, correctIndex, usedcitynames):
     pvals.append(pval)
     return pvals
     
-def graph_pre_post(ax, fig, q_id, is_cumulative, is_percent, questions_data, responses_data):
-    responsespre = responses_data.preAnswerByQ[q_id] #single q over different cities
-    responsespost = responses_data.postAnswerByQ[q_id]
-  
-    #setup
-    smSpace    = .1
-    bigSpace   = .2
-    question   = questions_data.get('pre', q_id)
-    numchoices = question.numberOfChoices
-    width      = (1 - bigSpace) / (numchoices*2)
-    numcit     = len(responsespre)
-    fontsize   = 8
-    colors     = ['#ab95d8','#f9cb8f','#cd7caa','#69caf4','#717263','#ffff66']
-
-    #data & graphing functions
-    usedcitynames, Xmax = set_data(ax,numchoices,numcit, responsespre, responsespost, colors, width,smSpace, bigSpace, q_id, is_cumulative, is_percent, questions_data )
-    if len(question.correctCharacter)>1:
-        pvals=[-1]
-    else:
-        correctIndex=ord(question.correctCharacter)-65
-        pvals=get_stats(responsespre,responsespost,correctIndex, usedcitynames)
-        print "pvals are: " 
-        print pvals
+def graph_pre_post(ax, q_index, is_cumulative, is_percent, questions_data, responses_data):
+    responsespre = responses_data.preAnswerByQ[q_index] #single q over different cities
+    responsespost = responses_data.postAnswerByQ[q_index]
     
-    set_ticks(responses_data.cityNames, ax, usedcitynames, numchoices, width, smSpace, bigSpace, fontsize,pvals, is_percent)
-    set_legend(q_id, numchoices,fontsize, questions_data)
+    #setup
+    question = questions_data.get('pre', q_index)
+    number_of_columns = question.numCol
+    numchoices = question.numberOfChoices
+    width = (1 - sh.BIG_SPACE) / (numchoices*2)
+    numcit = len(responsespre)
+    fontsize = 8
+    
+    #data & graphing functions
+    usedcitynames, Xmax = set_data(
+        ax,numchoices,numcit, responsespre, responsespost, width, q_index, is_cumulative, is_percent, questions_data 
+        )
+    
+    if question.correctCharacter == sh.NO_CORRECT_ANSWER:
+        pvals = [-1]
+    else:
+        correctIndex = ord(question.correctCharacter) - ord('A')
+        pvals = get_stats(responsespre,responsespost,correctIndex, usedcitynames)
+    
+    set_ticks(responses_data.cityNames, ax, usedcitynames, numchoices, width, fontsize,pvals, is_percent)
+    
+    
+    set_legend(number_of_columns, numchoices, fontsize)
     set_title(ax, question)
     
     #plot
@@ -266,7 +263,7 @@ def addPlotToPage(index, fig, q, is_cumulative, is_percent, questions_data, resp
     :param pvals:
     '''
     ax = fig.add_subplot(2, 1, index)
-    cit, pval = graph_pre_post(ax, fig, q, is_cumulative, is_percent, questions_data, responses_data)
+    cit, pval = graph_pre_post(ax, q, is_cumulative, is_percent, questions_data, responses_data)
     stored_city_name.append(cit)
     pvals.append(pval)
     
@@ -276,7 +273,7 @@ def make_subplots_each_question(section_iter, pdfName, is_cumulative, is_percent
     print(pdfName)
     print("~~~~~~~~~~~~~~~~~")
     
-    pdf = PdfPages(shared.getOutputPath() + pdfName)
+    pdf = PdfPages(sh.getOutputPath() + pdfName)
     stored_city_name=[]
     pvals=[]
 
@@ -285,8 +282,8 @@ def make_subplots_each_question(section_iter, pdfName, is_cumulative, is_percent
         print "\n\n\nprocess Q", q, 
         fig = plt.figure(figsize=(11,8.5), dpi=100)
         addPlotToPage(1,fig,q, is_cumulative, is_percent, questions_data, responses_data, stored_city_name, pvals)
-        pylab.figtext(0.01, .98, shared.GRAPH_TEXT_1, fontsize=8)
-        pylab.figtext(0.01, .97, shared.GRAPH_TEXT_2, fontsize=8, color='lime')
+        pylab.figtext(0.01, .98, sh.GRAPH_TEXT_1, fontsize=8)
+        pylab.figtext(0.01, .97, sh.GRAPH_TEXT_2, fontsize=8, color='lime')
         
         try:
             q = next(section_iter)
