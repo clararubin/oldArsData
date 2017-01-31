@@ -2,7 +2,6 @@
 import matplotlib.pyplot as plt
 import sys
 import pylab
-import os
 import shared as sh
 reload(sh)
 from matplotlib.backends.backend_pdf import PdfPages
@@ -163,20 +162,30 @@ def set_legend(number_of_columns, numchoices, fontsize):
     legend.get_frame().set_facecolor('none')
     legend.get_frame().set_linewidth(.5)
 
-#TODO: refactor this
 def set_title(ax, question):
-    wholeString = (question.questionText).split()
-    h=0
-    newString=''
-    while h<len(wholeString):
-        firstline=''
-        while len(firstline)<115 and h<len(wholeString):
-            firstline+=(wholeString[h]+' ')
-            h+=1
-        newString+=firstline
-        newString+=('\n')
-    print "setting title", newString
-    ax.set_title(newString, fontsize=8)
+    
+    def helper_function(line_list, new_word):
+        '''
+        helper function used for reduce, constructs list of lines containing
+        not too many characters per line
+        '''
+        if len(line_list[-1]) < 115:
+            line_list[-1] += new_word + ' '
+            return line_list
+        else:
+            line_list.append(new_word + ' ')
+            return line_list
+    
+    question_words = question.questionText.split()
+    title_lines = reduce(helper_function, question_words, [''])
+    title = '\n'.join(title_lines)
+    
+    # apparently the graphing code only works right if the title ends in a newline.
+    # this is probably not a good thing but I don't know how to fix it yet
+    title += '\n'
+            
+    print "Setting title to:", title
+    ax.set_title(title, fontsize=8)
     
 def get_pvals(correctPre, incorrectPre, correctPost, incorrectPost):
     print (correctPre,incorrectPre,correctPost,incorrectPost)
@@ -250,7 +259,7 @@ def graph_pre_post(ax, q_index, is_cumulative, is_percent, questions_data, respo
     return usedcitynames, pvals
 
 
-def addPlotToPage(index, fig, q, is_cumulative, is_percent, questions_data, responses_data, stored_city_name, pvals):
+def addPlotToPage(index, fig, q_index, is_cumulative, is_percent, questions_data, responses_data, stored_city_name, pvals):
     '''
     :param index:             index of plot on page (1 or 2 bc there are only 2 plots per page)
     :param fig:               object (in this case equal to 1 page) which contains plots
@@ -263,7 +272,7 @@ def addPlotToPage(index, fig, q, is_cumulative, is_percent, questions_data, resp
     :param pvals:
     '''
     ax = fig.add_subplot(2, 1, index)
-    cit, pval = graph_pre_post(ax, q, is_cumulative, is_percent, questions_data, responses_data)
+    cit, pval = graph_pre_post(ax, q_index, is_cumulative, is_percent, questions_data, responses_data)
     stored_city_name.append(cit)
     pvals.append(pval)
     
@@ -278,16 +287,16 @@ def make_subplots_each_question(section_iter, pdfName, is_cumulative, is_percent
     pvals=[]
 
     #iterates through the range of section numbers 2 at a time, or 1 if only 1 remaining
-    for q in section_iter:
-        print "\n\n\nprocess Q", q, 
+    for q_index in section_iter:
+        print "\n\n\nprocess Q", q_index, 
         fig = plt.figure(figsize=(11,8.5), dpi=100)
-        addPlotToPage(1,fig,q, is_cumulative, is_percent, questions_data, responses_data, stored_city_name, pvals)
+        addPlotToPage(1, fig, q_index, is_cumulative, is_percent, questions_data, responses_data, stored_city_name, pvals)
         pylab.figtext(0.01, .98, sh.GRAPH_TEXT_1, fontsize=8)
         pylab.figtext(0.01, .97, sh.GRAPH_TEXT_2, fontsize=8, color='lime')
         
         try:
-            q = next(section_iter)
-            addPlotToPage(2,fig,q, is_cumulative, is_percent, questions_data, responses_data, stored_city_name, pvals)
+            q_index = next(section_iter)
+            addPlotToPage(2, fig, q_index, is_cumulative, is_percent, questions_data, responses_data, stored_city_name, pvals)
         except StopIteration:
             pass
         
