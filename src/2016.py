@@ -22,10 +22,11 @@ def run16():
     responses_data = setup.Responses_Data(file_array, questions_data)
     out16.add_outside_responses(responses_data)
     
-    print(responses_data.cityNames)
+    graph_settings = common_runner.GraphSettings(
+                        is_cumulative = True, is_percent = True)
     
     common_runner.runBySection(
-            PDF_FILENAME_PREFIX, sections, questions_data, responses_data)
+            PDF_FILENAME_PREFIX, sections, questions_data, responses_data, graph_settings)
 
 
 run16()

@@ -56,28 +56,28 @@ def set_ticks(cityNames, ax, majorTickLabels, numchoices, width, fontsize, pvals
     ax.tick_params(which = 'major', direction = 'out')
     plt.tick_params(which='minor', length=0)
     
-def set_data(ax, numchoices, numcit, responsespre, responsespost, width, q_index, is_cumulative, is_percent, questions_data):    
-    question = questions_data.get('pre', q_index)
+def set_data(ax, numchoices, numcit, width, graph_settings, question_pair, response_pair):    
+    question = question_pair['pre']
     blankcities=0
     usedcitynames=[]
-    color=0
+    colors = iter(sh.COLORS)
     responsesprePercent=[]
     responsespostPercent=[]
     totalPre=[]
     totalPost=[]
-    for citnum in range(len(responsespre)):
-        totpre = sum(responsespre[citnum])
-        totpost= sum(responsespost[citnum])
+    for citnum in range(len(response_pair['pre'])):
+        totpre = sum(response_pair['pre'][citnum])
+        totpost= sum(response_pair['post'][citnum])
         totalPre.append(totpre)
         totalPost.append(totpost)
         temp=[]
         if totpre!=0:
-            for choice in responsespre[citnum]:
+            for choice in response_pair['pre'][citnum]:
                 temp.append(1.*choice)
         responsesprePercent.append(temp)
         temp=[]
         if totpost!=0:
-            for choice in responsespost[citnum]:
+            for choice in response_pair['post'][citnum]:
                 temp.append(1.*choice)
         responsespostPercent.append(temp)
     btracker=[]
@@ -100,9 +100,9 @@ def set_data(ax, numchoices, numcit, responsespre, responsespost, width, q_index
                     usedcitynames.append(citnum)
                     btracker.append(0)
                 #p?rint "cit/ch", citnum ,choicenum
-                preCumulative+=responsespre[citnum][choicenum]
-                postCumulative+=responsespost[citnum][choicenum]
-                if is_percent :
+                preCumulative+= response_pair['pre'][citnum][choicenum]
+                postCumulative+= response_pair['post'][citnum][choicenum]
+                if graph_settings.is_percent :
                     Yvals.append(100.0*responsesprePercent[citnum][choicenum]/totalPre[citnum]) 
                     Yvals.append(100.0*responsespostPercent[citnum][choicenum]/totalPost[citnum]) 
                 else:
@@ -117,28 +117,23 @@ def set_data(ax, numchoices, numcit, responsespre, responsespost, width, q_index
                 Xvals.append(temp)
                 Xvals.append(temp + width*numchoices + sh.SMALL_SPACE)    
         if (len(question.correctCharacter) > 1) or (ord(question.correctCharacter) - ord('A') != choicenum): #no correct answer
-            thiscolor= sh.COLORS[color]
-            color+=1
-            edgecolor='none'
+            thiscolor = next(colors)
         elif ord(question.correctCharacter)-65 == choicenum:
-            thiscolor='lime'
-            edgecolor='none'
+            thiscolor = 'lime'
         else:
             sys.stderr.write("color err")
             SystemExit()
+
         #add cumulative field
-        temp=((citnum+1-blankcities)*(2*width*numchoices + sh.SMALL_SPACE + sh.BIG_SPACE)+ choicenum*width )    
-        Xvals.append(temp)
-        Xvals.append(temp + width*numchoices + sh.SMALL_SPACE ) 
-        # **** DETERMINE CUMULATIVE ***
-        if is_cumulative:
+        if graph_settings.is_cumulative:
+            temp=((citnum+1-blankcities)*(2*width*numchoices + sh.SMALL_SPACE + sh.BIG_SPACE)+ choicenum*width )    
+            Xvals.append(temp)
+            Xvals.append(temp + width*numchoices + sh.SMALL_SPACE ) 
             Yvals.append(100.0*preCumulative/sum(totalPre))
             Yvals.append(100.0*postCumulative/sum(totalPost))
-        else:
-            Xvals=Xvals[0:-2]
             
         #ax.bar changes state of pdf
-        ax.bar(Xvals, Yvals, color=thiscolor, width=.8*width, label = question.arrayMultipleChoices[choicenum], edgecolor = edgecolor, linewidth=.7)
+        ax.bar(Xvals, Yvals, color=thiscolor, width=.8*width, label = question.arrayMultipleChoices[choicenum], edgecolor = 'none', linewidth=.7)
        
     
     nLoc = Xvals[-3]+2*width
@@ -200,17 +195,17 @@ def get_pvals(correctPre, incorrectPre, correctPost, incorrectPost):
     pval=stat.distributions.chi2.sf(chi,1)
     return pval
     
-def get_stats(responsespre, responsespost, correctIndex, usedcitynames):
+def get_stats(response_pair, correctIndex, usedcitynames):
     pvals=[]
     TOTcorrectPre=0
     TOTcorrectPost=0
     TOTincorrectPre=0
     TOTincorrectPost=0
     for citnum in usedcitynames:
-        correctPre=responsespre[citnum][correctIndex]
-        incorrectPre=sum(responsespre[citnum])-correctPre
-        correctPost=responsespost[citnum][correctIndex]
-        incorrectPost=sum(responsespost[citnum])-correctPost
+        correctPre = response_pair['pre'][citnum][correctIndex]
+        incorrectPre=sum(response_pair['pre'][citnum])-correctPre
+        correctPost=response_pair['post'][citnum][correctIndex]
+        incorrectPost=sum(response_pair['post'][citnum])-correctPost
         TOTcorrectPre+=correctPre
         TOTcorrectPost+=correctPost
         TOTincorrectPre+=incorrectPre
@@ -222,30 +217,28 @@ def get_stats(responsespre, responsespost, correctIndex, usedcitynames):
     pvals.append(pval)
     return pvals
     
-def graph_pre_post(ax, q_index, is_cumulative, is_percent, questions_data, responses_data):
-    responsespre = responses_data.preAnswerByQ[q_index] #single q over different cities
-    responsespost = responses_data.postAnswerByQ[q_index]
+def graph_pre_post(ax, city_names, graph_settings, question_pair, response_pair):
     
     #setup
-    question = questions_data.get('pre', q_index)
+    question = question_pair['pre']
     number_of_columns = question.numCol
     numchoices = question.numberOfChoices
     width = (1 - sh.BIG_SPACE) / (numchoices*2)
-    numcit = len(responsespre)
+    numcit = len(response_pair['pre'])
     fontsize = 8
     
     #data & graphing functions
     usedcitynames, Xmax = set_data(
-        ax,numchoices,numcit, responsespre, responsespost, width, q_index, is_cumulative, is_percent, questions_data 
+        ax,numchoices,numcit, width, graph_settings, question_pair, response_pair 
         )
     
     if question.correctCharacter == sh.NO_CORRECT_ANSWER:
         pvals = [-1]
     else:
         correctIndex = ord(question.correctCharacter) - ord('A')
-        pvals = get_stats(responsespre,responsespost,correctIndex, usedcitynames)
+        pvals = get_stats(response_pair, correctIndex, usedcitynames)
     
-    set_ticks(responses_data.cityNames, ax, usedcitynames, numchoices, width, fontsize,pvals, is_percent)
+    set_ticks(city_names, ax, usedcitynames, numchoices, width, fontsize,pvals, graph_settings.is_percent)
     
     
     set_legend(number_of_columns, numchoices, fontsize)
@@ -253,13 +246,13 @@ def graph_pre_post(ax, q_index, is_cumulative, is_percent, questions_data, respo
     
     #plot
     plt.xlim(0, Xmax)
-    if is_percent:
+    if graph_settings.is_percent:
         plt.ylim(0, 100)
     plt.tight_layout()
     return usedcitynames, pvals
 
 
-def addPlotToPage(index, fig, q_index, is_cumulative, is_percent, questions_data, responses_data, stored_city_name, pvals):
+def addPlotToPage(index, fig, city_names, graph_settings, question_pair, response_pair, stored_city_name, pvals):
     '''
     :param index:             index of plot on page (1 or 2 bc there are only 2 plots per page)
     :param fig:               object (in this case equal to 1 page) which contains plots
@@ -272,33 +265,33 @@ def addPlotToPage(index, fig, q_index, is_cumulative, is_percent, questions_data
     :param pvals:
     '''
     ax = fig.add_subplot(2, 1, index)
-    cit, pval = graph_pre_post(ax, q_index, is_cumulative, is_percent, questions_data, responses_data)
+    cit, pval = graph_pre_post(ax, city_names, graph_settings, question_pair, response_pair)
     stored_city_name.append(cit)
     pvals.append(pval)
     
     
-def make_subplots_each_question(section_iter, pdfName, is_cumulative, is_percent, questions_data, responses_data):
+def make_pdf_of_section(section_iter, pdfName, graph_settings, questions_data, responses_data):
     print("~~~~~~~~~~~~~~~~~")
     print(pdfName)
     print("~~~~~~~~~~~~~~~~~")
     
     pdf = PdfPages(sh.getOutputPath() + pdfName)
     stored_city_name=[]
+    city_names = responses_data.cityNames
     pvals=[]
 
     #iterates through the range of section numbers 2 at a time, or 1 if only 1 remaining
-    for q_index in section_iter:
-        print "\n\n\nprocess Q", q_index, 
+    for q_index_pair in section_iter:
+        print "\n\n\nProcess Q:", q_index_pair
+        
         fig = plt.figure(figsize=(11,8.5), dpi=100)
-        addPlotToPage(1, fig, q_index, is_cumulative, is_percent, questions_data, responses_data, stored_city_name, pvals)
         pylab.figtext(0.01, .98, sh.GRAPH_TEXT_1, fontsize=8)
         pylab.figtext(0.01, .97, sh.GRAPH_TEXT_2, fontsize=8, color='lime')
         
-        try:
-            q_index = next(section_iter)
-            addPlotToPage(2, fig, q_index, is_cumulative, is_percent, questions_data, responses_data, stored_city_name, pvals)
-        except StopIteration:
-            pass
+        for i,j in enumerate(q_index_pair):
+            question_pair = {'pre': questions_data.get('pre', j), 'post': questions_data.get('post', j)}
+            response_pair = {'pre': responses_data.preAnswerByQ[j], 'post': responses_data.postAnswerByQ[j]}
+            addPlotToPage(i+1, fig, city_names, graph_settings, question_pair, response_pair, stored_city_name, pvals)
         
         pdf.savefig(fig, orientation='portrait')
         
