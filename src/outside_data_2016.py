@@ -42,23 +42,24 @@ kr_medsc_post_q3 = [[21,19,23,9,2468],[19,11,25,2474,11],[14,2440,30,30,26]]
 kr_medsc_pre =  add_arrays(kr_medsc_pre_q2, kr_medsc_pre_q3)
 kr_medsc_post = add_arrays(kr_medsc_post_q2, kr_medsc_post_q3)
 
-def add_outside_responses(responses_data):
+def add_outside_responses(responses_data):    
     responses_data.cityNames += ["Medscape", "myCME"]
     numQs = 19
     for i in range(numQs+1):
         if i in (0,1,2):
-            responses_data.preAnswerByQ[i].append(kr_medsc_pre[i])
-            responses_data.postAnswerByQ[i].append(kr_medsc_post[i])
-            responses_data.preAnswerByQ[i].append(kr_mycme_pre[i])
-            responses_data.postAnswerByQ[i].append(kr_mycme_post[i])
+            responses_data.get('pre', i)["Medscape"] = kr_medsc_pre[i]
+            responses_data.get('post', i)["Medscape"] = kr_medsc_post[i]
+            responses_data.get('pre', i)["myCME"] = kr_mycme_pre[i]
+            responses_data.get('post', i)["myCME"] = kr_mycme_post[i]
         elif i in (3,4,5):
-            responses_data.preAnswerByQ[i].append(td_medsc_pre[i-3])
-            responses_data.postAnswerByQ[i].append(td_medsc_post[i-3])
-            responses_data.preAnswerByQ[i].append(td_mycme_pre[i-3])
-            responses_data.postAnswerByQ[i].append(td_mycme_post[i-3])
+            responses_data.get('pre', i)["Medscape"] = td_medsc_pre[i-3]
+            responses_data.get('post', i)["Medscape"] = td_medsc_post[i-3]
+            responses_data.get('pre', i)["myCME"] = td_mycme_pre[i-3]
+            responses_data.get('post', i)["myCME"] = td_mycme_post[i-3]
         else:
-            length = len(responses_data.preAnswerByQ[i][0])
-            responses_data.preAnswerByQ[i].append([0]*length)
-            responses_data.postAnswerByQ[i].append([0]*length)
-            responses_data.preAnswerByQ[i].append([0]*length)
-            responses_data.postAnswerByQ[i].append([0]*length)
+            length = len(responses_data.get('pre', i).values()[0])
+            
+            responses_data.get('pre', i)["Medscape"] = [0]*length
+            responses_data.get('post', i)["Medscape"] = [0]*length
+            responses_data.get('pre', i)["myCME"] = [0]*length
+            responses_data.get('post', i)["myCME"] = [0]*length

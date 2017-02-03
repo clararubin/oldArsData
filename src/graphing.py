@@ -7,30 +7,30 @@ reload(sh)
 from matplotlib.backends.backend_pdf import PdfPages
 
 
-def set_ticks(cityNames, ax, majorTickLabels, numchoices, width, fontsize, pvals, is_percent):
+def set_ticks(cityNames, ax, used_city_names, numchoices, width, fontsize, pvals, is_percent):
     minorticks=[]
     pretick=width*(numchoices)/2
     posttick=(pretick + sh.SMALL_SPACE + width*(numchoices))
     majorticks=[(pretick+posttick)/2]
     minorticks.append(pretick)
     minorticks.append(posttick)
-    while len(majorticks)<(len(majorTickLabels)+1):
+    while len(majorticks)<(len(used_city_names)+1):
         pretick=(posttick+ sh.BIG_SPACE+ width*(numchoices))
         posttick=(pretick+ sh.SMALL_SPACE + width*(numchoices))
         majorticks.append((pretick+posttick)/2)
         minorticks.append(pretick)
         minorticks.append(posttick)
     ax.set_xticks(minorticks, minor = True)
-    ax.set_xticklabels(['pre','post']*(len(majorTickLabels)+1), minor=True, fontsize=fontsize-1)
+    ax.set_xticklabels(['pre','post']*(len(used_city_names)+1), minor=True, fontsize=fontsize-1)
     ax.set_xticks(majorticks)
     labelsWithNewline=[]
-    for i in range(len(majorTickLabels)):
+    for i in range(len(used_city_names)):
         if pvals[0]==-1:
-            labelsWithNewline.append('\n'+((cityNames[majorTickLabels[i]])+'\n**'))
+            labelsWithNewline.append('\n'+used_city_names[i]+'\n**')
         elif pvals[i]<.05:
-            labelsWithNewline.append('\n'+((cityNames[majorTickLabels[i]])))
+            labelsWithNewline.append('\n'+used_city_names[i])
         elif pvals[i]>.05:
-            labelsWithNewline.append('\n'+((cityNames[majorTickLabels[i]])+'\n*'))
+            labelsWithNewline.append('\n'+used_city_names[i]+'\n*')
         else: 
             sys.stderr.write( "pval error")
             SystemExit()
@@ -56,28 +56,29 @@ def set_ticks(cityNames, ax, majorTickLabels, numchoices, width, fontsize, pvals
     ax.tick_params(which = 'major', direction = 'out')
     plt.tick_params(which='minor', length=0)
     
-def set_data(ax, numchoices, numcit, width, graph_settings, question_pair, response_pair):    
+def set_data(ax, numchoices, width, graph_settings, question_pair, response_pair):    
     question = question_pair['pre']
     blankcities=0
+    city_names = response_pair['pre'].keys()
     usedcitynames=[]
     colors = iter(sh.COLORS)
     responsesprePercent=[]
     responsespostPercent=[]
     totalPre=[]
     totalPost=[]
-    for citnum in range(len(response_pair['pre'])):
-        totpre = sum(response_pair['pre'][citnum])
-        totpost= sum(response_pair['post'][citnum])
+    for city in city_names:
+        totpre = sum(response_pair['pre'][city])
+        totpost= sum(response_pair['post'][city])
         totalPre.append(totpre)
         totalPost.append(totpost)
         temp=[]
         if totpre!=0:
-            for choice in response_pair['pre'][citnum]:
+            for choice in response_pair['pre'][city]:
                 temp.append(1.*choice)
         responsesprePercent.append(temp)
         temp=[]
         if totpost!=0:
-            for choice in response_pair['post'][citnum]:
+            for choice in response_pair['post'][city]:
                 temp.append(1.*choice)
         responsespostPercent.append(temp)
     btracker=[]
@@ -85,35 +86,35 @@ def set_data(ax, numchoices, numcit, width, graph_settings, question_pair, respo
     print totalPre
     print "total post is:"
     print totalPost
-    for choicenum in range(numchoices): #A
+    for choicenum in range(numchoices):
         Xvals = []
         Yvals = []
         preCumulative  = 0
         postCumulative = 0
-        for citnum in range(numcit):
-            if(totalPre[citnum] == 0): #city did not answer this q-- check during 'A' series
+        for city_index, city in enumerate(city_names):
+            if(totalPre[city_index] == 0): #city did not answer this q-- check during 'A' series
                 if choicenum == 0: 
                     blankcities+=1
                     btracker.append(1)
             else:
                 if choicenum == 0:
-                    usedcitynames.append(citnum)
+                    usedcitynames.append(city)
                     btracker.append(0)
                 #p?rint "cit/ch", citnum ,choicenum
-                preCumulative+= response_pair['pre'][citnum][choicenum]
-                postCumulative+= response_pair['post'][citnum][choicenum]
+                preCumulative+= response_pair['pre'][city][choicenum]
+                postCumulative+= response_pair['post'][city][choicenum]
                 if graph_settings.is_percent :
-                    Yvals.append(100.0*responsesprePercent[citnum][choicenum]/totalPre[citnum]) 
-                    Yvals.append(100.0*responsespostPercent[citnum][choicenum]/totalPost[citnum]) 
+                    Yvals.append(100.0*responsesprePercent[city_index][choicenum]/totalPre[city_index]) 
+                    Yvals.append(100.0*responsespostPercent[city_index][choicenum]/totalPost[city_index]) 
                 else:
-                    Yvals.append( responsesprePercent[citnum][choicenum] ) 
-                    Yvals.append( responsespostPercent[citnum][choicenum] ) 
+                    Yvals.append( responsesprePercent[city_index][choicenum] ) 
+                    Yvals.append( responsespostPercent[city_index][choicenum] ) 
                 blanksofar=0
                 z=0
-                while z<citnum:
+                while z<city_index:
                     blanksofar+=btracker[z]
                     z+=1
-                temp=((citnum-blanksofar)*(2*width*numchoices + sh.SMALL_SPACE + sh.BIG_SPACE) + choicenum*width )    
+                temp=((city_index - blanksofar)*(2*width*numchoices + sh.SMALL_SPACE + sh.BIG_SPACE) + choicenum*width )    
                 Xvals.append(temp)
                 Xvals.append(temp + width*numchoices + sh.SMALL_SPACE)    
         if (len(question.correctCharacter) > 1) or (ord(question.correctCharacter) - ord('A') != choicenum): #no correct answer
@@ -126,7 +127,7 @@ def set_data(ax, numchoices, numcit, width, graph_settings, question_pair, respo
 
         #add cumulative field
         if graph_settings.is_cumulative:
-            temp=((citnum+1-blankcities)*(2*width*numchoices + sh.SMALL_SPACE + sh.BIG_SPACE)+ choicenum*width )    
+            temp=((city_index+1-blankcities)*(2*width*numchoices + sh.SMALL_SPACE + sh.BIG_SPACE)+ choicenum*width )    
             Xvals.append(temp)
             Xvals.append(temp + width*numchoices + sh.SMALL_SPACE ) 
             Yvals.append(100.0*preCumulative/sum(totalPre))
@@ -138,7 +139,7 @@ def set_data(ax, numchoices, numcit, width, graph_settings, question_pair, respo
     
     nLoc = Xvals[-3]+2*width
     nLocY = .9
-    if(numcit<2):
+    if(len(city_names)<2):
         nLoc=.8
     
     summed_totalPre  = sum(totalPre)
@@ -201,11 +202,11 @@ def get_stats(response_pair, correctIndex, usedcitynames):
     TOTcorrectPost=0
     TOTincorrectPre=0
     TOTincorrectPost=0
-    for citnum in usedcitynames:
-        correctPre = response_pair['pre'][citnum][correctIndex]
-        incorrectPre=sum(response_pair['pre'][citnum])-correctPre
-        correctPost=response_pair['post'][citnum][correctIndex]
-        incorrectPost=sum(response_pair['post'][citnum])-correctPost
+    for city in usedcitynames:
+        correctPre = response_pair['pre'][city][correctIndex]
+        incorrectPre=sum(response_pair['pre'][city])-correctPre
+        correctPost=response_pair['post'][city][correctIndex]
+        incorrectPost=sum(response_pair['post'][city])-correctPost
         TOTcorrectPre+=correctPre
         TOTcorrectPost+=correctPost
         TOTincorrectPre+=incorrectPre
@@ -224,12 +225,11 @@ def graph_pre_post(ax, city_names, graph_settings, question_pair, response_pair)
     number_of_columns = question.numCol
     numchoices = question.numberOfChoices
     width = (1 - sh.BIG_SPACE) / (numchoices*2)
-    numcit = len(response_pair['pre'])
     fontsize = 8
     
     #data & graphing functions
     usedcitynames, Xmax = set_data(
-        ax,numchoices,numcit, width, graph_settings, question_pair, response_pair 
+        ax, numchoices, width, graph_settings, question_pair, response_pair 
         )
     
     if question.correctCharacter == sh.NO_CORRECT_ANSWER:
@@ -238,7 +238,7 @@ def graph_pre_post(ax, city_names, graph_settings, question_pair, response_pair)
         correctIndex = ord(question.correctCharacter) - ord('A')
         pvals = get_stats(response_pair, correctIndex, usedcitynames)
     
-    set_ticks(city_names, ax, usedcitynames, numchoices, width, fontsize,pvals, graph_settings.is_percent)
+    set_ticks(city_names, ax, usedcitynames, numchoices, width, fontsize, pvals, graph_settings.is_percent)
     
     
     set_legend(number_of_columns, numchoices, fontsize)
@@ -290,7 +290,7 @@ def make_pdf_of_section(section_iter, pdfName, graph_settings, questions_data, r
         
         for i,j in enumerate(q_index_pair):
             question_pair = {'pre': questions_data.get('pre', j), 'post': questions_data.get('post', j)}
-            response_pair = {'pre': responses_data.preAnswerByQ[j], 'post': responses_data.postAnswerByQ[j]}
+            response_pair = {'pre': responses_data.get('pre', j), 'post': responses_data.get('post', j)}
             addPlotToPage(i+1, fig, city_names, graph_settings, question_pair, response_pair, stored_city_name, pvals)
         
         pdf.savefig(fig, orientation='portrait')

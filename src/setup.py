@@ -5,7 +5,7 @@ import numpy as np
 
 
 class Question:
-    def __init__(self, questionText, topic, time, correctCharacter, arrayChoices,numCol,id):
+    def __init__(self, questionText, topic, time, correctCharacter, arrayChoices, numCol, id):
         self.questionText         = questionText
         self.correctCharacter     = correctCharacter 
         self.topic                = topic
@@ -21,7 +21,7 @@ class Question:
 
 class Questions_Data:
     def __init__(self, questions_filepath):
-        self.qDict = {'demo':OrderedDict(), 'pre':OrderedDict(), 'post':OrderedDict()}
+        self.qDict = {'demo':[], 'pre':[], 'post':[]}
         
         df = pd.DataFrame.from_csv(questions_filepath)
         cols = df.columns
@@ -44,43 +44,58 @@ class Questions_Data:
                                 i
                                 )
             
-            self.qDict[question.time][question.id] = question
+            self.qDict[question.time].append(question)
     
-    def get(self, time, i):
-        question_id = self.get_question_id_list(time)[i]
-        return self.qDict[time][question_id]
+    def get(self, time, i = None):
+        if i == None:
+            return self.qDict[time]
+        return self.qDict[time][i]
         
     def get_question_id_list(self, time):
-        return self.qDict[time].keys()
+        return map(lambda q: q.id, self.qDict[time])
             
 
 class Responses_Data:
     def __init__(self, array_files, questions_data):
+                
         #following line checks for either / or \ in filepath because of different OS's
         #TODO: make less hacky
         tempCityNames=[((i.split('/' if '/' in i else '\\'))[-1] ) for i in array_files]
         self.cityNames=[((i.split('.'))[0] ) for i in tempCityNames]
         
-        pre_ids = questions_data.get_question_id_list('pre')
-        post_ids = questions_data.get_question_id_list('post')
-        demo_ids = questions_data.get_question_id_list('demo')
+        ids = {
+        'pre': questions_data.get_question_id_list('pre'),
+        'post': questions_data.get_question_id_list('post'),
+        'demo': questions_data.get_question_id_list('demo'),
+        }
         
         # load preByCity using qID['pre'] column names
-        preByCity = [pd.DataFrame.from_csv(i, header=8).loc[:,pre_ids] for i in array_files]
-        postByCity= [pd.DataFrame.from_csv(i, header=8).loc[:,post_ids] for i in array_files]
-        demoByCity= [pd.DataFrame.from_csv(i, header=8).loc[:,demo_ids] for i in array_files]
+        data_frames = {}
+        for time in ('pre', 'post', 'demo'):
+            data_frames[time] = {}
+            for city_name, city_file in zip(self.cityNames, array_files):
+                data_frames[time][city_name] = pd.DataFrame.from_csv(city_file, header=8).loc[:,ids[time]]
     
         # regroup from byCity to byQ
-        self.preAnswerByQ=[[self.tally_responses(cit,'pre', q_id, questions_data) for cit in preByCity] for q_id in pre_ids]
-        self.postAnswerByQ=[[self.tally_responses(cit,'post', q_id, questions_data) for cit in postByCity] for q_id in post_ids]
-        self.demoAnswerByQ=[[self.tally_responses(cit,'demo', q_id, questions_data) for cit in demoByCity] for q_id in demo_ids]
+        # this object will be accessed like self[time][q_index][city_name]
+        # e.g. responses_data['pre'][3]['Atlanta']
+        # and will return a list containing the number of occurances of each
+        #    answer to that question by that city
+        self.responses_by_question = {}
+        for time in ('pre', 'post', 'demo'):
+            self.responses_by_question[time] = []
+            for i, _ in enumerate(questions_data.get(time)):
+                self.responses_by_question[time].append(OrderedDict())
+                for city_name, city_data_frame in data_frames[time].items():
+                    self.responses_by_question[time][i][city_name] = self.tally_responses(city_data_frame, time, i, questions_data)
     
-        cumuPreTally=[[sum(x) for x in zip(*[c for c in q])] for q in self.preAnswerByQ ]
-        cumuPostTally=[[sum(x) for x in zip(*[c for c in q])] for q in self.postAnswerByQ ]
+    def get(self, time, i):
+        # returns an OrderedDict that is indexable by city names (strings)
+        # and contains lists of integers corresposning to how many people
+        # answered A/B/C/D/etc
+        return self.responses_by_question[time][i]
     
-        self.cumuData = [cumuPreTally, cumuPostTally]
-    
-    def tally_responses(self, inputFrame, time, q_id, questions_data):   
+    def tally_responses(self, inputFrame, time, q_index, questions_data):   
         ''' 
         Counts number of A's, B's, etc for a question.
         
@@ -89,15 +104,16 @@ class Responses_Data:
         :param q_id:       which question in the category
         :returns:          array of counts for each mult choice answer
         '''
-        numberOfChoices = (questions_data.qDict[time][q_id]).numberOfChoices
+        question = questions_data.get(time, q_index)
+        numberOfChoices = question.numberOfChoices
         
         if len(inputFrame) == 0:
             return np.zeros(numberOfChoices)
             
         arrayOfResponses = []
         for letter in sh.MULTIPLE_CHOICE_LETTERS[:numberOfChoices]:
-            expr = '%s == "%s"' % (q_id, letter) 
-            arrayOfResponses.append(inputFrame.query(expr).count()[q_id])
+            expr = '%s == "%s"' % (question.id, letter) 
+            arrayOfResponses.append(inputFrame.query(expr).count()[question.id])
         return arrayOfResponses
         
 
