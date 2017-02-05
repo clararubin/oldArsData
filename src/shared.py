@@ -19,8 +19,13 @@ def getInputPath():
 def getOutputPath():
     return '../../output/' if (os.name == 'posix') else '..\..\output\\'
     
-    
-
+def iter_doubler(iterr):
+    iterr = iter(iterr)
+    for i in iterr:
+        try:
+            yield (i, next(iterr))
+        except StopIteration:
+            yield (i,)
 
 # 2015 stuff (TO BE MOVED)
 cities15 = ['Anaheim.csv','Atlanta.csv','Boston.csv','Ft Lauderdale2.csv','Indianapolis.csv' ,'Miami.csv','Nashville.csv' ,'Philadelphia.csv','Richardson.csv','San Antonio.csv','Scottsdale.csv','Southfield.csv','Springfield.csv','Syracuse.csv','Uniondale.csv' ]

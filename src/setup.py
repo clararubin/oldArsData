@@ -1,7 +1,7 @@
 import shared as sh
+reload(sh)
 from collections import OrderedDict
 import pandas as pd
-import numpy as np
 
 
 class Question:
@@ -60,8 +60,8 @@ class Responses_Data:
                 
         #following line checks for either / or \ in filepath because of different OS's
         #TODO: make less hacky
-        tempCityNames=[((i.split('/' if '/' in i else '\\'))[-1] ) for i in array_files]
-        self.cityNames=[((i.split('.'))[0] ) for i in tempCityNames]
+        temp_city_names=[((i.split('/' if '/' in i else '\\'))[-1] ) for i in array_files]
+        all_city_names=[((i.split('.'))[0] ) for i in temp_city_names]
         
         ids = {
         'pre': questions_data.get_question_id_list('pre'),
@@ -73,7 +73,7 @@ class Responses_Data:
         data_frames = {}
         for time in ('pre', 'post', 'demo'):
             data_frames[time] = {}
-            for city_name, city_file in zip(self.cityNames, array_files):
+            for city_name, city_file in zip(all_city_names, array_files):
                 data_frames[time][city_name] = pd.DataFrame.from_csv(city_file, header=8).loc[:,ids[time]]
     
         # regroup from byCity to byQ
@@ -87,13 +87,18 @@ class Responses_Data:
             for i, _ in enumerate(questions_data.get(time)):
                 self.responses_by_question[time].append(OrderedDict())
                 for city_name, city_data_frame in data_frames[time].items():
-                    self.responses_by_question[time][i][city_name] = self.tally_responses(city_data_frame, time, i, questions_data)
+                    temp = self.tally_responses(city_data_frame, time, i, questions_data)
+                    if temp != None:
+                        self.responses_by_question[time][i][city_name] = temp
     
     def get(self, time, i):
         # returns an OrderedDict that is indexable by city names (strings)
         # and contains lists of integers corresposning to how many people
         # answered A/B/C/D/etc
         return self.responses_by_question[time][i]
+        
+    def get_cities(self, time, i):
+        return self.get(time, i).keys()
     
     def tally_responses(self, inputFrame, time, q_index, questions_data):   
         ''' 
@@ -108,12 +113,14 @@ class Responses_Data:
         numberOfChoices = question.numberOfChoices
         
         if len(inputFrame) == 0:
-            return np.zeros(numberOfChoices)
+            return None
             
         arrayOfResponses = []
         for letter in sh.MULTIPLE_CHOICE_LETTERS[:numberOfChoices]:
             expr = '%s == "%s"' % (question.id, letter) 
             arrayOfResponses.append(inputFrame.query(expr).count()[question.id])
+        if sum(arrayOfResponses) == 0:
+            return None
         return arrayOfResponses
         
 

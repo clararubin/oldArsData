@@ -1,10 +1,9 @@
-import setup, graphing, common_runner, shared
-import outside_data_2016 as out16
+import setup, graphing, common_runner, shared, outside_data_2016
 
 reload(setup)
 reload(graphing)
 reload(common_runner)
-reload(out16)
+reload(outside_data_2016)
 reload(shared)
 
 
@@ -20,7 +19,7 @@ def run16():
     PDF_FILENAME_PREFIX = "perc psych update 2016 ARS"
     questions_data = setup.Questions_Data(questions_filepath)
     responses_data = setup.Responses_Data(file_array, questions_data)
-    out16.add_outside_responses(responses_data)
+    outside_data_2016.add_outside_responses(responses_data)
     
     graph_settings = common_runner.GraphSettings(
                         is_cumulative = True, is_percent = True)
