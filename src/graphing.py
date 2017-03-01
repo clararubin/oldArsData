@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 import matplotlib.pyplot as plt
-import sys
 import pylab
 import shared as sh
 reload(sh)
@@ -8,124 +7,92 @@ import stats
 reload(stats)
 from matplotlib.backends.backend_pdf import PdfPages
 
-def set_ticks(ax, used_city_names, numchoices, width, fontsize, pvals, is_percent):
-    minorticks=[]
-    pretick=width*(numchoices)/2
-    posttick=(pretick + sh.SMALL_SPACE + width*(numchoices))
-    majorticks=[(pretick+posttick)/2]
-    minorticks.append(pretick)
-    minorticks.append(posttick)
-    while len(majorticks)<(len(used_city_names)+1):
-        pretick=(posttick+ sh.BIG_SPACE+ width*(numchoices))
-        posttick=(pretick+ sh.SMALL_SPACE + width*(numchoices))
-        majorticks.append((pretick+posttick)/2)
-        minorticks.append(pretick)
-        minorticks.append(posttick)
-    ax.set_xticks(minorticks, minor = True)
-    ax.set_xticklabels(['pre','post']*(len(used_city_names)+1), minor=True, fontsize=fontsize-1)
-    ax.set_xticks(majorticks)
-    labelsWithNewline=[]
-    for i in range(len(used_city_names)):
-        if pvals[0]==-1:
-            labelsWithNewline.append('\n'+used_city_names[i]+'\n**')
-        elif pvals[i]<.05:
-            labelsWithNewline.append('\n'+used_city_names[i])
-        elif pvals[i]>.05:
-            labelsWithNewline.append('\n'+used_city_names[i]+'\n*')
-        else: 
-            sys.stderr.write( "pval error")
-            SystemExit()
-    if pvals[0]==-1:
-        labelsWithNewline.append('\n Cumulative\n**')
-    if pvals[-1]<.05:
-        labelsWithNewline.append('\n Cumulative')
+def get_labels(used_city_names, pvals):
+    labels = ['\n' + city for city in used_city_names]
+    if pvals == None:
+        labels = [label + '\n**' for label in labels]
     else:
-        labelsWithNewline.append('\n Cumulative\n*')
-    if is_percent:  
-        ax.set_ylabel('%')
-    else:
-        ax.set_ylabel('# Responses')
+        labels = [label + '\n*'*(pval > .05) for label,pval in zip(labels,pvals)]
+    return labels
+
+def set_ticks(ax, used_city_names, numchoices, pvals, graph_settings):
+    cluster_width = (1 - sh.BIG_SPACE) / 2
     
-    ax.set_xticklabels(labelsWithNewline, fontsize = 5)
+    preticks = [cluster_width/2 + i*(sh.SMALL_SPACE + sh.BIG_SPACE + 2*cluster_width)
+                for i in range(len(used_city_names))]
+    postticks = [i + sh.SMALL_SPACE + cluster_width for i in preticks]
+    
+    #sets minorticks to an interleaving of preticks and postticks
+    minorticks = [x for y in zip(preticks, postticks) for x in y]
+    ax.set_xticks(minorticks, minor = True)
+    ax.set_xticklabels(['pre','post'] * len(used_city_names), minor = True, fontsize = sh.FONT_SIZE)
+    
+    #sets majorticks to an average of preticks and postticks
+    majorticks = [(x+y)/2 for x,y in zip(preticks, postticks)]
+    ax.set_xticks(majorticks)
+    
+    ax.set_ylabel('%' if graph_settings.is_percent else '# Responses')
+        
+    labels = get_labels(used_city_names, pvals)
+    ax.set_xticklabels(labels, fontsize = 5)
+    
     ax.xaxis.set_ticks_position('bottom')
     ax.yaxis.set_ticks_position('left')
     ax.spines['top'].set_visible(False)
     ax.spines['right'].set_visible(False)
     ax.tick_params(which = 'major', direction = 'out')
-    plt.tick_params(which='minor', length=0)
+    ax.tick_params(which = 'minor', length=0)
     
-def set_data(ax, numchoices, width, graph_settings, question_pair, response_pair):    
+def set_data(ax, numchoices, graph_settings, question_pair, response_pair):  
+    cluster_width = (1 - sh.BIG_SPACE) / 2
+    bar_width = cluster_width / numchoices 
+    city_width = 2*cluster_width + sh.SMALL_SPACE + sh.BIG_SPACE
+    
     correct_answer = question_pair['pre'].correctCharacter
     answer_list = question_pair['pre'].arrayMultipleChoices
-    city_names = response_pair['pre'].keys()
+    used_city_names = response_pair['pre'].keys()
     
     colors = iter(sh.COLORS)
     
-    total_answers = {'pre': {}, 'post': {}}
-    for city in city_names:
-        for time in 'pre','post':
-            total_answers[time][city] = sum(response_pair[time][city])
-    print "total number of responses are: %s" % (total_answers)
-    
-    all_responses = {time: sum(v.values())
-                     for time, v in total_answers.items()}
-    
     for choicenum in range(numchoices):
-        Xvals = []
-        Yvals = []
-        preCumulative  = 0
-        postCumulative = 0
-        for city_index, city in enumerate(city_names):
-            preCumulative += response_pair['pre'][city][choicenum]
-            postCumulative += response_pair['post'][city][choicenum]
-            
-            temp = city_index*(2*width*numchoices + sh.SMALL_SPACE + sh.BIG_SPACE) + choicenum*width  
-            Xvals.append(temp)
-            Xvals.append(temp + width*numchoices + sh.SMALL_SPACE)
-            
-            pre_height_scalar = 100.0/total_answers['pre'][city] if graph_settings.is_percent else 1
-            post_height_scalar = 100.0/total_answers['post'][city] if graph_settings.is_percent else 1
-            Yvals.append(response_pair['pre'][city][choicenum] * pre_height_scalar) 
-            Yvals.append(response_pair['post'][city][choicenum] * post_height_scalar)
-
-        #add cumulative field
-        if graph_settings.is_cumulative:
-            temp = len(city_names)*(2*width*numchoices + sh.SMALL_SPACE + sh.BIG_SPACE) + choicenum*width   
-            Xvals.append(temp)
-            Xvals.append(temp + width*numchoices + sh.SMALL_SPACE)
-            
-            pre_height_scalar  = 100.0/all_responses['pre']  if graph_settings.is_percent else 1
-            post_height_scalar = 100.0/all_responses['post'] if graph_settings.is_percent else 1
-            Yvals.append(preCumulative  * pre_height_scalar)
-            Yvals.append(postCumulative * post_height_scalar)
+        Xvals = [ city_index*city_width + choicenum*bar_width + time_offset
+                  for city_index in range(len(used_city_names))
+                  for time_offset in (0, cluster_width + sh.SMALL_SPACE)
+                ]
+                
+        Yvals = [ response_pair[time][city][choicenum] * height_scalar
+                  for city in used_city_names
+                  for time in ('pre','post')
+                  for height_scalar in [100.0/sum(response_pair[time][city]) if graph_settings.is_percent else 1]
+                ]
         
         #set the color for this bar 
-        thiscolor = 'lime'
+        bar_color = sh.CORRECT_COLOR
         if (len(correct_answer) > 1) or (ord(correct_answer) - ord('A') != choicenum): #not the correct answer
-            thiscolor = next(colors)
+            bar_color = next(colors)
             
-        #ax.bar changes state of pdf
-        ax.bar(Xvals, Yvals, color=thiscolor, width=.8*width, label = answer_list[choicenum], edgecolor = 'none', linewidth=.7)
+        ax.bar(Xvals, Yvals, color=bar_color, width=.8*bar_width, label = answer_list[choicenum], edgecolor = 'none', linewidth=.7)
        
-    
-    nLocX = Xvals[-3] + 2*width if len(city_names) >= 2 else .8
+    #TODO: wtf is this line
+    nLocX = Xvals[-3] + 2*bar_width if len(used_city_names) >= 2 else .8
     nLocY = .9
     
-    ax.annotate('pre:  N=%d\npost: N=%d' % (all_responses['pre'], all_responses['post']),
+    ax.annotate( #TODO: make work for non-cumulative
+        'pre:  N=%d\n' % sum(response_pair['pre']['Cumulative']) +
+        'post: N=%d'   % sum(response_pair['post']['Cumulative']),
         xy          = (nLocX, nLocY),
         xycoords    = ax.get_xaxis_transform(),
         fontsize    = 6,
         va          = 'top'
         )
 
-    Xmax = Xvals[-1] + width
-    return city_names, Xmax
+    Xmax = Xvals[-1] + bar_width
+    return used_city_names, Xmax
 
-def set_legend(number_of_columns, numchoices, fontsize):
+def set_legend(number_of_columns, numchoices):
     legH = 1.05
     legW = 0.5
-    legfontsize = fontsize-1
-    legend = plt.legend(loc='upper center', bbox_to_anchor=(legW, legH), ncol=number_of_columns, fontsize=legfontsize) 
+    legend = plt.legend(loc='upper center', bbox_to_anchor=(legW, legH), ncol=number_of_columns, fontsize=sh.FONT_SIZE) 
     legend.get_frame().set_facecolor('none')
     legend.get_frame().set_linewidth(.5)
 
@@ -152,7 +119,7 @@ def set_title(ax, question_text):
     title += '\n'
     
     print "Setting title to:", title
-    ax.set_title(title, fontsize=8)
+    ax.set_title(title, fontsize = sh.TITLE_FONT_SIZE)
 
     
 def graph_pre_post(ax, graph_settings, question_pair, response_pair):
@@ -160,22 +127,20 @@ def graph_pre_post(ax, graph_settings, question_pair, response_pair):
     question = question_pair['pre']
     number_of_columns = question.numCol
     numchoices = question.numberOfChoices
-    width = (1 - sh.BIG_SPACE) / (numchoices*2)
-    fontsize = 8
     
     #data & graphing functions
     used_city_names, Xmax = set_data(
-        ax, numchoices, width, graph_settings, question_pair, response_pair 
+        ax, numchoices, graph_settings, question_pair, response_pair 
         )
     
     if question.correctCharacter == sh.NO_CORRECT_ANSWER:
-        pvals = [-1]
+        pvals = None
     else:
         correctIndex = ord(question.correctCharacter) - ord('A')
         pvals = stats.get_pvals(response_pair, correctIndex, used_city_names)
     
-    set_ticks(ax, used_city_names, numchoices, width, fontsize, pvals, graph_settings.is_percent)    
-    set_legend(number_of_columns, numchoices, fontsize)
+    set_ticks(ax, used_city_names, numchoices, pvals, graph_settings)    
+    set_legend(number_of_columns, numchoices)
     set_title(ax, question.questionText)
     
     #plot

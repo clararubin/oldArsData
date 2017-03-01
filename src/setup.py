@@ -90,6 +90,11 @@ class Responses_Data:
                     temp = self.tally_responses(city_data_frame, time, i, questions_data)
                     if temp != None:
                         self.responses_by_question[time][i][city_name] = temp
+                        
+    def add_cumulative(self):
+        for time in ('pre', 'post', 'demo'):
+            for i, _ in enumerate(self.responses_by_question[time]):
+                self.responses_by_question[time][i]['Cumulative'] = map(sum, zip(*self.responses_by_question[time][i].values()))
     
     def get(self, time, i):
         # returns an OrderedDict that is indexable by city names (strings)
