@@ -1,5 +1,3 @@
-import pandas as pd
-
 class ARSData:
     def __init__(self, qdf, rdf):
         self.qdf = qdf
@@ -30,12 +28,15 @@ class ARSData:
     def get_category_names(self, partition):
         return self.rdf[partition].dropna().unique()
     def get_relevant_category_names(self, partition, q_number):
-        return self.rdf[pd.notnull(self.rdf[q_number])][partition].dropna().unique()
+        return self.rdf[self.rdf[q_number].notnull()][partition].dropna().unique()
         
     def count_responses(self, q_number, subset = None, response = None):
         df = self.rdf
-        if subset != None and subset[1] != 'Cumulative':
-            df = df[df[subset[0]] == subset[1]]
+        if subset != None:
+            if subset[1] == 'Cumulative':
+                df = df[df[subset[0]].notnull()]
+            else:
+                df = df[df[subset[0]] == subset[1]]
         if response != None:
             df = df[df[q_number] == response]
         return df[q_number].count()

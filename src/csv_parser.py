@@ -20,7 +20,7 @@ def questions_df(filepath): #filepath is a single filepath to the questions file
         'index_col'        : 0,
         'names'            : range(1,48),
         'skiprows'         : 1,
-        'na_values'        : '-',
+        'na_values'        : ('-', 'none'),
     }
     
     df = pd.read_csv(filepath, **settings)

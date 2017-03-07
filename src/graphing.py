@@ -89,8 +89,8 @@ def set_data(ax, graph_settings, data, pre_number):
     nLocY = .9
     
     ax.annotate(
-        'pre:  N=%d\n' % data.count_responses(q_nums[0]) +
-        'post: N=%d'   % data.count_responses(q_nums[1]),
+        'pre:  N=%d\n' % data.count_responses(q_nums[0], subset = (partition, 'Cumulative')) +
+        'post: N=%d'   % data.count_responses(q_nums[1], subset = (partition, 'Cumulative')),
         xy          = (nLocX, nLocY),
         xycoords    = ax.get_xaxis_transform(),
         fontsize    = 6,
@@ -141,7 +141,7 @@ def graph_pre_post(ax, graph_settings, data, pre_number):
         )
     
     #TODO
-    pvals = None
+    pvals = stats.get_pvals(data, pre_number, used_city_names, graph_settings)
     
     set_ticks(ax, graph_settings, pvals, used_city_names)    
     set_legend(data.legend_columns(pre_number))

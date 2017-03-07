@@ -1,4 +1,5 @@
 import scipy.stats as stat
+import pandas as pd
 
 def compute_pval(correctPre, incorrectPre, correctPost, incorrectPost):
     print correctPre,incorrectPre,correctPost,incorrectPost
@@ -13,23 +14,38 @@ def compute_pval(correctPre, incorrectPre, correctPost, incorrectPost):
     pval = stat.distributions.chi2.sf(chi, 1)
     return pval
     
-def get_pvals(response_pair, correctIndex, used_city_names):
-    pvals=[]
-    #TOTcorrectPre=0
-    #TOTcorrectPost=0
-    #TOTincorrectPre=0
-    #TOTincorrectPost=0
-    for city in used_city_names:
-        print(city)
-        correctPre = response_pair['pre'][city][correctIndex]
-        incorrectPre=sum(response_pair['pre'][city])-correctPre
-        correctPost=response_pair['post'][city][correctIndex]
-        incorrectPost=sum(response_pair['post'][city])-correctPost
-        #TOTcorrectPre+=correctPre
-        #TOTcorrectPost+=correctPost
-        #TOTincorrectPre+=incorrectPre
-        #TOTincorrectPost+=incorrectPost
-        pvals.append( compute_pval(correctPre,incorrectPre,correctPost,incorrectPost) )
-
-    #pvals.append( compute_pval(TOTcorrectPre,TOTincorrectPre,TOTcorrectPost,TOTincorrectPost) )
-    return pvals
+def func(data, section, partition, correct_character, q_numbers):
+    pre_correct = int(data.count_responses(
+            q_number = q_numbers[0],
+            subset = (partition, section),
+            response = correct_character
+            ))
+    pre_incorrect = int(data.count_responses(
+            q_number = q_numbers[0],
+            subset = (partition, section)
+            ) - pre_correct)
+    post_correct = int(data.count_responses(
+            q_number = q_numbers[1],
+            subset = (partition, section),
+            response = correct_character
+            ))
+    post_incorrect = int(data.count_responses(
+            q_number = q_numbers[1],
+            subset = (partition, section)
+            ) - post_correct)
+    
+    return compute_pval(pre_correct, pre_incorrect, post_correct, post_incorrect)
+    
+def get_pvals(data, pre_number, section_names, graph_settings):
+    
+    correct_character = data.correct_character(pre_number)
+    if pd.isnull(correct_character):
+        return None
+    
+    partition = graph_settings.partition
+    q_numbers = data.pre_post_of_pre(pre_number)
+         
+    return [
+        func(data, section, partition, correct_character, q_numbers)
+        for section in section_names
+        ] 
