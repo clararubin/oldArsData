@@ -15,7 +15,7 @@ def get_labels(used_city_names, pvals):
         labels = [label + '\n*'*(pval > .05) for label,pval in zip(labels,pvals)]
     return labels
 
-def set_ticks(ax, used_city_names, numchoices, pvals, graph_settings):
+def set_ticks(ax, graph_settings, pvals, used_city_names):
     cluster_width = (1 - sh.BIG_SPACE) / 2
     
     preticks = [cluster_width/2 + i*(sh.SMALL_SPACE + sh.BIG_SPACE + 2*cluster_width)
@@ -43,43 +43,54 @@ def set_ticks(ax, used_city_names, numchoices, pvals, graph_settings):
     ax.tick_params(which = 'major', direction = 'out')
     ax.tick_params(which = 'minor', length=0)
     
-def set_data(ax, numchoices, graph_settings, question_pair, response_pair):  
-    cluster_width = (1 - sh.BIG_SPACE) / 2
-    bar_width = cluster_width / numchoices 
-    city_width = 2*cluster_width + sh.SMALL_SPACE + sh.BIG_SPACE
+def set_data(ax, graph_settings, data, pre_number):
+    number_of_choices = data.number_of_choices(pre_number)
     
-    correct_answer = question_pair['pre'].correctCharacter
-    answer_list = question_pair['pre'].arrayMultipleChoices
-    used_city_names = response_pair['pre'].keys()
+    cluster_width = (1 - sh.BIG_SPACE) / 2
+    bar_width = cluster_width / number_of_choices 
+    category_width = 2*cluster_width + sh.SMALL_SPACE + sh.BIG_SPACE
+    
+    q_nums = data.pre_post_of_pre(pre_number)
+    correct_choice = data.correct_character(pre_number)
+    choice_list = data.choice_list(pre_number)
+    answer_list = data.answer_list(pre_number)
+    
+    partition = graph_settings.partition
+    category_names = list(data.get_relevant_category_names(partition, pre_number))
+    if graph_settings.is_cumulative: category_names.append('Cumulative')
     
     colors = iter(sh.COLORS)
     
-    for choicenum in range(numchoices):
-        Xvals = [ city_index*city_width + choicenum*bar_width + time_offset
-                  for city_index in range(len(used_city_names))
+    for choicenum, choice in enumerate(choice_list):
+        #TODO clean this up with ranges        
+        
+        Xvals = [ index*category_width + choicenum*bar_width + time_offset
+                  for index in range(len(category_names))
                   for time_offset in (0, cluster_width + sh.SMALL_SPACE)
                 ]
-                
-        Yvals = [ response_pair[time][city][choicenum] * height_scalar
-                  for city in used_city_names
-                  for time in ('pre','post')
-                  for height_scalar in [100.0/sum(response_pair[time][city]) if graph_settings.is_percent else 1]
-                ]
+       
+        Yvals = []
+        for category in category_names:
+            for q_num in q_nums:
+                height_scalar = 1
+                if graph_settings.is_percent:
+                    total_responses = data.count_responses(q_num, subset = (partition, category))
+                    height_scalar = 100.0 / total_responses
+                responses = data.count_responses(q_num, subset = (partition, category), response = choice)
+                Yvals.append(responses * height_scalar)
         
-        #set the color for this bar 
-        bar_color = sh.CORRECT_COLOR
-        if (len(correct_answer) > 1) or (ord(correct_answer) - ord('A') != choicenum): #not the correct answer
-            bar_color = next(colors)
+        #set the color for this bar
+        bar_color = next(colors) if correct_choice != choice else sh.CORRECT_COLOR
             
         ax.bar(Xvals, Yvals, color=bar_color, width=.8*bar_width, label = answer_list[choicenum], edgecolor = 'none', linewidth=.7)
        
     #TODO: wtf is this line
-    nLocX = Xvals[-3] + 2*bar_width if len(used_city_names) >= 2 else .8
+    nLocX = Xvals[-3] + 2*bar_width if len(category_names) >= 2 else .8
     nLocY = .9
     
-    ax.annotate( #TODO: make work for non-cumulative
-        'pre:  N=%d\n' % sum(response_pair['pre']['Cumulative']) +
-        'post: N=%d'   % sum(response_pair['post']['Cumulative']),
+    ax.annotate(
+        'pre:  N=%d\n' % data.count_responses(q_nums[0]) +
+        'post: N=%d'   % data.count_responses(q_nums[1]),
         xy          = (nLocX, nLocY),
         xycoords    = ax.get_xaxis_transform(),
         fontsize    = 6,
@@ -87,9 +98,9 @@ def set_data(ax, numchoices, graph_settings, question_pair, response_pair):
         )
 
     Xmax = Xvals[-1] + bar_width
-    return used_city_names, Xmax
+    return category_names, Xmax
 
-def set_legend(number_of_columns, numchoices):
+def set_legend(number_of_columns):
     legH = 1.05
     legW = 0.5
     legend = plt.legend(loc='upper center', bbox_to_anchor=(legW, legH), ncol=number_of_columns, fontsize=sh.FONT_SIZE) 
@@ -122,60 +133,41 @@ def set_title(ax, question_text):
     ax.set_title(title, fontsize = sh.TITLE_FONT_SIZE)
 
     
-def graph_pre_post(ax, graph_settings, question_pair, response_pair):
-    #setup
-    question = question_pair['pre']
-    number_of_columns = question.numCol
-    numchoices = question.numberOfChoices
+def graph_pre_post(ax, graph_settings, data, pre_number):
     
     #data & graphing functions
     used_city_names, Xmax = set_data(
-        ax, numchoices, graph_settings, question_pair, response_pair 
+        ax, graph_settings, data, pre_number
         )
     
-    if question.correctCharacter == sh.NO_CORRECT_ANSWER:
-        pvals = None
-    else:
-        correctIndex = ord(question.correctCharacter) - ord('A')
-        pvals = stats.get_pvals(response_pair, correctIndex, used_city_names)
+    #TODO
+    pvals = None
     
-    set_ticks(ax, used_city_names, numchoices, pvals, graph_settings)    
-    set_legend(number_of_columns, numchoices)
-    set_title(ax, question.questionText)
+    set_ticks(ax, graph_settings, pvals, used_city_names)    
+    set_legend(data.legend_columns(pre_number))
+    set_title(ax, data.get_question_text(pre_number))
     
     #plot
     plt.xlim(0, Xmax)
-    if graph_settings.is_percent:
-        plt.ylim(0, 100)
+    if graph_settings.is_percent: plt.ylim(0, 100)
     plt.tight_layout()
-
-
-def addPlotToPage(index, fig, graph_settings, question_pair, response_pair):
-    '''
-    :param index:             index of plot on page (1 or 2 bc there are only 2 plots per page)
-    :param fig:               object (in this case equal to 1 page) which contains plots
-    :param graph_settings:
-    :param questions_data:
-    :param responses_data:
-    '''
-    ax = fig.add_subplot(2, 1, index)
-    graph_pre_post(ax, graph_settings, question_pair, response_pair)
     
-def make_pdf_of_section(section_iter, pdfName, graph_settings): #TODO: remove city_names as arg    
+def make_pdf_of_section(pdfName, data, topic, graph_settings):  
     pdf = PdfPages(sh.getOutputPath() + pdfName)
 
     # iterates through the questions+response data 2 questions worth
     # at a time, or 1 if only 1 remaining
-    for q_r_tuple in sh.iter_doubler(section_iter):
+    pre_numbers = data.get_pres_of_topic(topic)
+    
+    for pre_tuple in sh.iter_doubler(pre_numbers):
 
         fig = plt.figure(figsize=(11,8.5), dpi=100)
         pylab.figtext(0.01, .98, sh.GRAPH_TEXT_1, fontsize=8)
         pylab.figtext(0.01, .97, sh.GRAPH_TEXT_2, fontsize=8, color='lime')
         
-        for index, q_and_r_data in enumerate(q_r_tuple): #iterates over either 1 or 2 items 
-            question_pair = q_and_r_data['question_pair']
-            response_pair = q_and_r_data['response_pair']
-            addPlotToPage(index+1, fig, graph_settings, question_pair, response_pair)
+        for i, pre_number in enumerate(pre_tuple): #iterates over either 1 or 2 item
+            ax = fig.add_subplot(2, 1, i+1)
+            graph_pre_post(ax, graph_settings, data, pre_number)
         
         pdf.savefig(fig, orientation='portrait')
 

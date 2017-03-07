@@ -1,3 +1,6 @@
+import pandas as pd
+import itertools
+
 def add_arrays(a,b):
     '''
     Recursively traverses two n-dimensional arrays and adds them element-wise
@@ -44,7 +47,15 @@ kr_medsc_post_q3 = [[21,19,23,9,2468],[19,11,25,2474,11],[14,2440,30,30,26]]
 kr_medsc_pre =  add_arrays(kr_medsc_pre_q2, kr_medsc_pre_q3)
 kr_medsc_post = add_arrays(kr_medsc_post_q2, kr_medsc_post_q3)
 
-def add_outside_responses(responses_data):
+#def add_outside_responses(responses_data):
+df = pd.DataFrame({6: 
+   sum(map(
+        lambda (x, y): [chr(x+65)]*y,
+        enumerate(kr_medsc_pre[0])
+    ), [])})
+print(df)
+    
+'''
     numQs = 19
     for i in range(numQs+1):
         if i in (0,1,2):
@@ -57,3 +68,4 @@ def add_outside_responses(responses_data):
             responses_data.get('post', i)["Medscape"] = td_medsc_post[i-3]
             responses_data.get('pre', i)["myCME"] = td_mycme_pre[i-3]
             responses_data.get('post', i)["myCME"] = td_mycme_post[i-3]
+'''
