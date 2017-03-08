@@ -3,11 +3,11 @@ class ARSData:
         self.qdf = qdf
         self.rdf = rdf
     
-    def remove_demo(self):
-        self.qdf = self.qdf[self.qdf['time'] != 'demo']
+    #def remove_demo(self):
+    #    self.qdf = self.qdf[self.qdf['time'] != 'demo']
         
-    def get_topics(self):
-        return self.qdf['topic'].unique()
+    def get_nondemo_topics(self):
+        return self.qdf[self.qdf['time'] != 'demo']['topic'].unique()
     def get_pres_of_topic(self, topic):
         return self.qdf[self.qdf['topic'] == topic][self.qdf['time'] == 'pre'].index.tolist()
     def pre_post_of_pre(self, number):
@@ -26,9 +26,15 @@ class ARSData:
         return self.qdf.ix[q_number, 'question text']
         
     def get_category_names(self, partition):
-        return self.rdf[partition].dropna().unique()
+        try:
+            return self.choice_list(partition)
+        except KeyError:
+            return self.rdf[partition].dropna().unique()
     def get_relevant_category_names(self, partition, q_number):
-        return self.rdf[self.rdf[q_number].notnull()][partition].dropna().unique()
+        try:
+            return self.choice_list(partition) #TODO: make relevant
+        except KeyError:
+            return self.rdf[self.rdf[q_number].notnull()][partition].dropna().unique()
         
     def count_responses(self, q_number, subset = None, response = None):
         df = self.rdf
