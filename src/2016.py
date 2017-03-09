@@ -8,10 +8,11 @@ reload(ARSData)
 
 
 input_path = shared.getInputPath()
+PDF_FILENAME_PREFIX = "perc psych update 2016 ARS"
 questions_filepath = input_path + 'questions2.csv'
-cities =     ['Atlanta', 'Chicago','Los Angeles', 'Miami', 'Houston', 'Philadelphia' , 'NYC', 'San Francisco','DC', 'Boston', 'USPC 2016']
+cities =     ['Atlanta', 'Chicago', 'Los Angeles', 'Miami', 'Houston', 'Philadelphia', 'NYC', 'San Francisco', 'DC', 'Boston', 'USPC 2016']
 filepaths = [input_path + city + ".csv" for city in cities]
-sections =   ([0,2],[3,5],[6,9],[10,13],[14,16],[17,19])
+#sections =   ([0,2],[3,5],[6,9],[10,13],[14,16],[17,19])
 degree_map = {'A':'MD', 'B':'DO', 'C':'RN', 'D':'NP', 'E':'PA', 'F':'PhD', 'G':'Other'}
 
 
@@ -22,8 +23,7 @@ def run16():
                         partition = 'module',
                         #category_map = degree_map
                         )
-    
-    PDF_FILENAME_PREFIX = "perc psych update 2016 ARS"
+
     qdf = csv_parser.questions_df(questions_filepath)
     
     rdf = csv_parser.responses_df(zip(cities,filepaths))
@@ -31,7 +31,7 @@ def run16():
     data = ARSData.ARSData(qdf, rdf)
     
     graphing.make_pdfs(
-            PDF_FILENAME_PREFIX, sections, data, graph_settings)
+            PDF_FILENAME_PREFIX, data, graph_settings)
 
 
 run16()

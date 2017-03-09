@@ -18,7 +18,7 @@ class GraphSettings():
         self.partition = partition
         self.category_map = category_map
 
-def make_pdfs(PDF_FILENAME_PREFIX, section_list, data, graph_settings):
+def make_pdfs(PDF_FILENAME_PREFIX, data, graph_settings):
     for i, topic in enumerate(data.get_nondemo_topics()):        
 
         PDF_FILENAME = pdf_name_generator.generate_pdf_name(PDF_FILENAME_PREFIX, i+1)
@@ -56,14 +56,14 @@ def make_pdf_of_section(pdfName, data, topic, graph_settings):
 def graph_pre_post(ax, graph_settings, data, pre_number):
     
     #data & graphing functions
-    used_city_names, Xmax = set_data(
+    category_names, Xmax = set_data(
         ax, graph_settings, data, pre_number
         )
     
     #TODO
-    pvals = stats.get_pvals(data, pre_number, used_city_names, graph_settings)
+    pvals = stats.get_pvals(data, pre_number, category_names, graph_settings)
     
-    set_ticks(ax, graph_settings, pvals, used_city_names)    
+    set_ticks(ax, graph_settings, pvals, category_names)    
     set_legend(data.legend_columns(pre_number))
     set_title(ax, data.get_question_text(pre_number))
     
@@ -161,17 +161,17 @@ def set_data(ax, graph_settings, data, pre_number):
     Xmax = Xvals[-1] + bar_width
     return category_names, Xmax
 
-def set_ticks(ax, graph_settings, pvals, used_city_names):
+def set_ticks(ax, graph_settings, pvals, category_names):
     cluster_width = (1 - sh.BIG_SPACE) / 2
     
     preticks = [cluster_width/2 + i*(sh.SMALL_SPACE + sh.BIG_SPACE + 2*cluster_width)
-                for i in range(len(used_city_names))]
+                for i in range(len(category_names))]
     postticks = [i + sh.SMALL_SPACE + cluster_width for i in preticks]
     
     #sets minorticks to an interleaving of preticks and postticks
     minorticks = [x for y in zip(preticks, postticks) for x in y]
     ax.set_xticks(minorticks, minor = True)
-    ax.set_xticklabels(['pre','post'] * len(used_city_names), minor = True, fontsize = sh.FONT_SIZE)
+    ax.set_xticklabels(['pre','post'] * len(category_names), minor = True, fontsize = sh.FONT_SIZE)
     
     #sets majorticks to an average of preticks and postticks
     majorticks = [(x+y)/2 for x,y in zip(preticks, postticks)]
@@ -179,7 +179,7 @@ def set_ticks(ax, graph_settings, pvals, used_city_names):
     
     ax.set_ylabel('%' if graph_settings.is_percent else '# Responses')
         
-    labels = get_labels(used_city_names, pvals, graph_settings)
+    labels = get_labels(category_names, pvals, graph_settings)
     ax.set_xticklabels(labels, fontsize = 5)
     
     ax.xaxis.set_ticks_position('bottom')
