@@ -12,6 +12,17 @@ reload(pdf_name_generator)
 
     
 class GraphSettings():
+    '''
+    Object that determines the settings for how the graphs get drawn.
+    Parameters include:
+        is_cumulative - whether to add a section for cumulative totals
+        is_percent - whether to label the y-axis as raw numbers or percents
+        partition - string representing how to segment the data across different plots
+            e.g. 'module' for cities, or 'Q3' for degrees
+        category_map - dumb temporary hack to relabel the categories so that they display
+            the actual name of each group rather than just letters. Leave this as None when
+            graphing by city but change otherwise
+    '''
     def __init__(self, is_cumulative = True, is_percent = True, partition = 'module', category_map = None):
         self.is_cumulative = is_cumulative
         self.is_percent = is_percent

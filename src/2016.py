@@ -21,8 +21,16 @@ def run16():
                         is_cumulative = True,
                         is_percent = True,
                         partition = 'module',
-                        #category_map = degree_map
                         )
+   
+    #Uncomment the following to graph by degree instead of by city
+    #            
+    #graph_settings = graphing.GraphSettings(
+    #                    is_cumulative = True,
+    #                    is_percent = True,
+    #                    partition = 'Q3',
+    #                    category_map = degree_map
+    #                    )
 
     qdf = csv_parser.questions_df(questions_filepath)
     
