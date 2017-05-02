@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import matplotlib.pyplot as plt
-import pylab
+import pylab, os
 from matplotlib.backends.backend_pdf import PdfPages
 
 import shared as sh
@@ -42,7 +42,8 @@ def make_pdfs(PDF_FILENAME_PREFIX, data, graph_settings):
                             PDF_FILENAME, data, topic, graph_settings
                             )
 
-def make_pdf_of_section(pdfName, data, topic, graph_settings):  
+def make_pdf_of_section(pdfName, data, topic, graph_settings): 
+    print os.getcwd()
     pdf = PdfPages(sh.getOutputPath() + pdfName)
 
     # iterates through the questions+response data 2 questions worth

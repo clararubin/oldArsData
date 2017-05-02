@@ -1,6 +1,3 @@
-import pandas as pd
-import itertools
-
 def add_arrays(a,b):
     '''
     Recursively traverses two n-dimensional arrays and adds them element-wise
@@ -18,42 +15,36 @@ def add_arrays(a,b):
     except TypeError:
         return a + b
 
+'''Managing Mixed Depression (Kraeplin & Beyond) module'''
+#MYCME
+part1_mycme = [[110,78,93,51,77],[98,51,108,126,26],[59,72,87,108,83],[0,0,0,0,346],[0,0,0,346,0],[0,346,0,0,0]]
+
+#MEDSCAPE 2016 Q2
+part1_medsc_A = [[224,194,278,67,470],[247,58,322,550,56],[83,230,242,401,277],[25,13,26,9,1782],[19,9,28,1787,11],[13,1761,27,26,28]]
+part1_medsc_B = [[270,240,341,90,567],[309,76,375,678,70],[106,283,307,474,338],[21,19,23,9,2468],[19,11,25,2474,11],[14,2440,30,30,26]]
+
+part1_medsc = add_arrays(part1_medsc_A, part1_medsc_B)
+
 
 '''TD module'''
 #MEDSCAPE 2016
-td_medsc_pre_q2 = [[224,226,1274,313,451],[180,28,46,2074,159],[392,321,735,236,803]]
-td_medsc_post_q2 = [[15,15,2324,17,20],[15,3,12,2345,13],[16,2321,28,11,16]]
-td_medsc_pre_q3 = [[262,270,1483,365,505],[213,43,51,2339,178],[425,436,856,257,910]]
-td_medsc_post_q3 = [[15,19,3166,15,21],[18,4,14,3188,12],[15,3161,31,10,19]]
+part2_medsc_A = [[224,226,1274,313,451],[180,28,46,2074,159],[392,321,735,236,803],[15,15,2324,17,20],[15,3,12,2345,13],[16,2321,28,11,16]]
+part2_medsc_B = [[262,270,1483,365,505],[213,43,51,2339,178],[425,436,856,257,910],[15,19,3166,15,21],[18,4,14,3188,12],[15,3161,31,10,19]]
 
-td_medsc_pre  = add_arrays(td_medsc_pre_q2, td_medsc_pre_q3)
-td_medsc_post = add_arrays(td_medsc_post_q2, td_medsc_post_q3)
+part2_medsc = add_arrays(part2_medsc_A, part2_medsc_B)
 
 #MYCME
-td_mycme_pre = [[48,34,134,21,48],[44,18,10,193,20],[58,39,61,26,101]]
-td_mycme_post = [[0,0,259,0,0],[0,0,0,259,0],[0,259,0,0,0]]    
+part2_mycme = [[48,34,134,21,48],[44,18,10,193,20],[58,39,61,26,101],[0,0,259,0,0],[0,0,0,259,0],[0,259,0,0,0]]
 
-'''Managing Mixed Depression (Kraeplin & Beyond) module'''
-#MYCME
-kr_mycme_pre = [[110,78,93,51,77],[98,51,108,126,26],[59,72,87,108,83]]
-kr_mycme_post = [[0,0,0,0,346],[0,0,0,346,0],[0,346,0,0,0]]
+#####
+q_nums = ['Q' + str(i) for i in range(8,20)]
+medsc = dict(zip(q_nums, part1_medsc + part2_medsc))
+mycme = dict(zip(q_nums, part1_mycme + part2_mycme))
 
-#MEDSCAPE 2016 Q2
-kr_medsc_pre_q2 = [[224,194,278,67,470],[247,58,322,550,56],[83,230,242,401,277]]
-kr_medsc_post_q2 = [[25,13,26,9,1782],[19,9,28,1787,11],[13,1761,27,26,28]]
-kr_medsc_pre_q3 = [[270,240,341,90,567],[309,76,375,678,70],[106,283,307,474,338]]
-kr_medsc_post_q3 = [[21,19,23,9,2468],[19,11,25,2474,11],[14,2440,30,30,26]]
-
-kr_medsc_pre =  add_arrays(kr_medsc_pre_q2, kr_medsc_pre_q3)
-kr_medsc_post = add_arrays(kr_medsc_post_q2, kr_medsc_post_q3)
-
-#def add_outside_responses(responses_data):
-df = pd.DataFrame({6: 
-   sum(map(
-        lambda (x, y): [chr(x+65)]*y,
-        enumerate(kr_medsc_pre[0])
-    ), [])})
-print(df)
+def add_to(arsdata):
+    arsdata.add_outside_reponses("Medscape", medsc)
+    arsdata.add_outside_reponses("My CME", mycme)
+    
     
 '''
     numQs = 19

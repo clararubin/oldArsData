@@ -16,11 +16,16 @@ TITLE_FONT_SIZE = 8
 GRAPH_TEXT_1 = '* = change not significant (p$\geq$0.05)'
 GRAPH_TEXT_2 = '\ngreen = correct answer'
 
+#change working directory to location of this file
+abspath = os.path.abspath(__file__)
+dname = os.path.dirname(abspath)
+os.chdir(dname)
+
 def getInputPath():
-    return '../../input/' if (os.name == 'posix') else '..\..\input\\'
+    return os.path.join(os.getcwd(), "../../input/")
 
 def getOutputPath():
-    return '../../output/' if (os.name == 'posix') else '..\..\output\\'
+    return os.path.join(os.getcwd(), "../../output/")
     
 def iter_doubler(iterr):
     iterr = iter(iterr)
@@ -29,11 +34,6 @@ def iter_doubler(iterr):
             yield (i, next(iterr))
         except StopIteration:
             yield (i,)
-
-# 2015 stuff (TO BE MOVED)
-cities15 = ['Anaheim.csv','Atlanta.csv','Boston.csv','Ft Lauderdale2.csv','Indianapolis.csv' ,'Miami.csv','Nashville.csv' ,'Philadelphia.csv','Richardson.csv','San Antonio.csv','Scottsdale.csv','Southfield.csv','Springfield.csv','Syracuse.csv','Uniondale.csv' ]
-arrayFiles15=[ '..\..\input\%s' % (city) for city in cities15]
-sections15=[[0,3],[4,7],[8,11],[12,15],[16,20],[21,24]]
 
 
 
